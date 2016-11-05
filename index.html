@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>
+    <!--<link rel="stylesheet" href="style.css">-->
+</head>
+<body>
+<div id="infos">
+
+</div>
+<div id="game" style="display: none;">
+
+</div>
+<span id="timer" style="display: none;"></span>
+<form id="register">
+    <input type="text" name="username" autofocus required placeholder="your username"/>
+    <input type="submit" name="register" value="Register"/>
+</form>
+<span id="username" style="display:none"></span>
+<button id="join_queue" style="display:none">Join queue</button>
+<button id="join_match" style="display: none;">Join match</button>
+<button id="decline_match" style="display: none;">Decline match</button>
+<div id="chat">
+
+</div>
+<form id="message" style="display: none;">
+    <input type="text" name="message" autofocus required placeholder="message..."/>
+    <input type="submit" name="send" value="Send"/>
+</form>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    var user = {};
+
+    $('#register').submit(function (e) {
+        e.preventDefault();
+        $(this).fadeOut();
+        user.username = $('input[name=username]').val();
+        socket.emit('register', user.username, function(id){
+            $('#username').append(user.username).show();
+            $('#join_queue').show();
+            user.id = id;
+            socket.emit('message', 'joined the chat');
+            $('#message').show();
+        });
+    })
+
+    $('#join_queue').click(function (e) {
+        $(this).fadeOut();
+        $('#infos').html('currently in queue ...');
+        socket.emit('mma');
+    });
+
+    $('#message').submit(function (e) {
+        console.log('msg send');
+        e.preventDefault();
+        if($('input[name=message]').val() !== '' || $('input[name=message]').val() !== ' '){
+            socket.emit('message', $('input[name=message]').val());
+        }
+        $('input[name=message]').val(' ');
+    });
+
+    socket.on('newMessage', function (messages) {
+        console.log('msg re');
+        $('#chat').html(' ');
+        messages.forEach(function (element, index, array) {
+            $('#chat').append('<span><strong>'+element.username+'</strong> : '+element.message+' <i>('+element.timestamp+')</i><br/></span>');
+        });
+    });
+
+    socket.on('matched', function (match_id, callback) {
+        alert('Game finded');
+
+
+        $('#infos').html('game matched !');
+        user.match = match_id;
+        $('#join_match').fadeIn();
+        $('#decline_match').fadeIn();
+
+        var beginning = 5000;
+        var ecoule = 0;
+        var hasTimedOut = false;
+        $('#timer').show();
+        var timer = setInterval(function () {
+            ecoule += 100;
+            if(beginning-ecoule <= 0 && hasTimedOut === false){
+                callback(false);
+                clearInterval(timer);
+                hasTimedOut = true;
+                $('#infos').html('you\'ve declined the match');
+                $('#timer').hide();
+                $('#join_match').fadeOut();
+                $('#decline_match').fadeOut();
+                $('#join_queue').fadeIn();
+            }
+            else{
+                $('#timer').html('remaining time :'+(beginning-ecoule));
+            }
+        }, 100);
+
+        $('#join_match').click(function (e) {
+            if(hasTimedOut === false){
+                callback(true);
+                hasTimedOut = true;
+                clearInterval(timer);
+                $('#infos').html('you\'ve accepted the match');
+                $(this).fadeOut();
+                $('#timer').hide();
+                $('#decline_match').fadeOut();
+            }
+        });
+
+        $('#decline_match').click(function (e) {
+            if(hasTimedOut === false){
+                callback(false);
+                hasTimedOut = true;
+                clearInterval(timer);
+                $('#infos').html('you\'ve declined the match');
+                $(this).fadeOut();
+                $('#timer').hide();
+                $('#join_match').fadeOut();
+                $('#join_queue').fadeIn();
+            }
+        });
+    });
+
+    socket.on('decline', function(){
+        $('#infos').html('Opponent declined');
+        $('input[name=username]').val(user.username).hide();
+        $('#username').html(user.username);
+        $('#mma').fadeIn();
+    });
+
+    socket.on('game_start', function (p1_username, p2_username) {
+        $('#infos').html(p1_username+' versus '+p2_username);
+        $('#game').show();
+        $('#chat').html(' ');
+    });
+
+    socket.on('leave', function (opp_username) {
+        $('#infos').html(opp_username+' leaved');
+        $('#join_queue').fadeIn();
+    });
+
+</script>
+</body>
+</html>

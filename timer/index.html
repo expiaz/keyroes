@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        #timer{
+            position: relative;
+            width:80px;
+            height:80px;
+        }
+        #time{
+            position: absolute;
+            top: 30px;
+            left: 30px;
+        }
+    </style>
+</head>
+<body>
+<button>a</button>
+
+<div id="timer"><div id="time"></div></div>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="jquery-circle-progress-1.2.0/dist/circle-progress.js"></script>
+<script src="sweetalert-master/dist/sweetalert.min.js"></script>
+<script>
+    var socket = io();
+
+
+    /*var c6_context = document.getElementById("circle").firstElementChild.getContext("2d");
+
+    function showTime(time) {
+        c6_context.fillStyle = '#000';
+        c6_context.font = '10px sans-serif';
+        c6_context.textBaseline = 'bottom';
+        c6_context.fillText('a', 10, 10);
+    }*/
+    $('button').click(function () {
+        socket.emit('clck');
+    });
+
+
+    socket.on('match', function (timer_length) {
+
+        $('#time').html(timer_length);
+
+        $('#timer').circleProgress({
+            value: 0,
+            size: 80,
+            fill: "rgba(0, 0, 0, .1)",
+            emptyFill: "#000000",
+            animation: {
+                duration: 100,
+                easing: "linear"
+            },
+            startAngle: - Math.PI / 2
+        });
+    });
+
+    socket.on('tick', function (angle, time) {
+        $('#timer').circleProgress('value',angle);
+        $('#time').html(time.s);
+        console.log(time.ms);
+    });
+
+    //$('#circle').circleProgress('value', $('#circle').circleProgress('value') + 0.1);
+    /*
+    var n = setInterval(function () {
+
+        console.log('bf '+$('#circle').circleProgress('value'));
+
+
+        if(Math.abs($('#circle').circleProgress('value')) >= 0 && Math.abs($('#circle').circleProgress('value')) <= 1){
+            $('#circle').circleProgress('value', $('#circle').circleProgress('value') - 0.1);
+        } else{
+            clearInterval(n);
+            console.log('clear');
+        }
+        console.log('af '+$('#circle').circleProgress('value'));
+    }, 100);
+    */
+
+</script>
+</body>
+</html>
