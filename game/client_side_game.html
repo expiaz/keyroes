@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div>Points : <span class="points">0</span> <input type="text" onkeypress="javascript:return false" autofocus/></div>
+<div id="game"></div>
+<div id="clearfix"></div>
+
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    var user = {};
+
+    function getChar(event) {
+        if (event.which == null) {
+            return String.fromCharCode(event.keyCode) // IE
+        } else if (event.which!=0 && event.charCode!=0) {
+            return String.fromCharCode(event.which)   // the rest
+        } else {
+            return null // special key
+        }
+    }
+
+    socket.on('genletter',function (letter) {
+        var w = window,
+            d = document,
+            e = d.documentElement,
+            g = d.getElementsByTagName('body')[0],
+            w = w.innerWidth || e.clientWidth || g.clientWidth,
+            h = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+        h = Math.floor(h*0.75);
+
+        $('#game').css('height', h + 'px');
+        $('#game').css('width', w + 'px');
+        $('#game').css('background-color','rgba('+letter.bg.r+','+letter.bg.g+','+letter.bg.b+',0.5)');
+        var y = (h - (20+letter.size))*(letter.y/100);
+        y = Math.floor(y);
+        var x = (w - (20+letter.size/2))*(letter.x /100);
+        x = Math.floor(x);
+        //console.log('x: '+x+' , y: ('+h+'-('+(20+letter.size)+'))*('+(letter.y/100)+');');
+        $('#game').html('<span id="'+letter.code+'-'+letter.letter+'" style="color: rgb('+letter.color.r+','+letter.color.g+','+letter.color.b+');font-size:'+letter.size+'px;font-family:'+letter.font+';font-style:'+letter.italic+';font-weight:'+letter.bold+';position:absolute;top:'+y+'px;left:'+x+'px;">'+letter.letter+'</span>')
+
+    })
+
+    $('input').keypress(function (e) {
+        $('input').val(getChar(e));
+        console.log(e.which);
+        console.log(e.keyCode);
+
+        socket.emit('keypressed',{letter: getChar(e), keycode: e.keyCode || e.which}, function(points){
+            $('.points').html(points);
+        });
+    });
+
+
+
+</script>
+</body>
+</html>
