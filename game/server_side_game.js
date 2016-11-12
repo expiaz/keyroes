@@ -47,7 +47,7 @@ function getTimestamp(){
 
 var queue = [], matchs = [], messages = [], users = [], _l = [], keycodes = [91,92,93,94,95,96], font_family = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'] , font_size = ['10','12'];
 
-function gen(){
+function genLetter(){
     var l_code, l_color, l_bg;
     do{
         l_code = Math.floor(Math.random() * ( 26*2 )) + 65;

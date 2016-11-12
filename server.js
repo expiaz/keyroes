@@ -38,6 +38,44 @@ function getTimestamp(){
     return (new Date().getHours()+':'+new Date().getMinutes());
 }
 
+function genLetter(){
+    var keycodes = [91,92,93,94,95,96], font_family = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'];
+    
+    var l_code;
+    do{
+        l_code = Math.floor(Math.random() * ( 26*2 )) + 65;
+    }while(keycodes.indexOf(l_code)!=-1);
+
+    var o1,o2,o3;
+    do{
+        o1 = Math.floor(Math.random() * ( 150 )) + 50;
+        o2 = Math.floor(Math.random() * ( 150 )) + 50;
+        o3 = Math.floor(Math.random() * ( 150 )) + 50;
+    }while(o1 == o2 || o2 == o3 || o1 == o3);
+    
+    return {
+        letter: String.fromCharCode(l_code),
+        code: l_code,
+        font: font_family[Math.floor(Math.random() * ( font_family.length ))],
+        size: Math.floor(Math.random() * ( 50 )) + 20,
+        color:{
+            r:o1,
+            g:o2,
+            b:o3
+        },
+        bg:{
+            r:255-o1,
+            g:255-o2,
+            b:255-o3
+        },
+        italic: Math.floor(Math.random() * ( 100 )) > 50 ? 'italic' : 'normal',
+        bold: (Math.floor(Math.random() * ( 4 )) + 3) * 100,
+        x: Math.floor(Math.random() * ( 100 )) + 1,
+        y: Math.floor(Math.random() * ( 100 )) + 1,
+        done: false
+    };
+}
+
 var queue = [], matchs = [], messages = [], users = [];
 
 io.on('connection', function(socket) {
@@ -53,6 +91,7 @@ io.on('connection', function(socket) {
     socket.id_user = socket.hasOwnProperty('id_user') === true ? socket.id_user : createHash(9);
     socket.username = socket.hasOwnProperty('username') === true ? socket.username : null;
     socket.player_number = socket.hasOwnProperty('player_number') === true ? socket.player_number : null;
+    socket.points = socket.hasOwnProperty('points') === true ? socket.points : null;
 
 
     socket.on('register', function (username, callback) {
@@ -128,13 +167,20 @@ io.on('connection', function(socket) {
                     p2.match = match_id;
                     p1.state = 'IN_GAME';
                     p2.state = 'IN_GAME';
+                    p1.points = 0;
+                    p2.points = 0;
                     io.to(match_id).emit('game_start', p1.username, p2.username);
                     matchs.push({
                         id: match_id,
                         p1: p1,
                         p2: p2,
-                        messages: []
+                        messages: [],
+                        letters: []
                     });
+                    var l = genLetter();
+                    matchs.indexOfObj('id', match_id).letters.push(l);
+                    io.to(match_id).emit('sendLetter',l);
+                    io.to(match_id).emit('majPts',{p1:0, p2:0});
                 }
                 else if(p1.accepted === true && p2.accepted === false){
                     p1.emit('decline');
@@ -183,6 +229,30 @@ io.on('connection', function(socket) {
         }
     });
 
+    socket.on('keypressed', function (key) {
+        console.log(key);
+        if(matchs.indexOfObj('id', socket.match) !== undefined) {
+            console.log('ok')
+            var match_infos = matchs.indexOfObj('id', socket.match);
+            console.log(match_infos.letters.indexOfObj('done',false));
+            if (match_infos.letters.indexOfObj('done',false) != -1 && match_infos.letters.indexOfObj('done',false).code === key.keycode){
+                console.log('ok')
+                match_infos.letters.indexOfObj('done',false).done = true;
+
+                socket.id === match_infos.p1.id ? match_infos.p1.points++ : match_infos.p2.points++;
+                console.log({p1:match_infos.p1.points, p2:match_infos.p2.points});
+                var l = genLetter();
+                match_infos.letters.push(l);
+                io.to(match_infos.id).emit('sendLetter', l);
+                io.to(match_infos.id).emit('majPts',{p1:match_infos.p1.points, p2:match_infos.p2.points});
+            }
+            else{
+                socket.id === match_infos.p1.id ? (match_infos.p1.points > 0 ? --match_infos.p1.points : match_infos.p1.points) : (match_infos.p2.points > 0 ? --match_infos.p2.points : match_infos.p2.points);
+                io.to(match_infos.id).emit('majPts',{p1:match_infos.p1.points, p2:match_infos.p2.points});
+            }
+        }
+
+    });
 
     socket.on('disconnect', function () {
 

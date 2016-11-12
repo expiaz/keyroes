@@ -3,15 +3,18 @@
 <head>
     <meta charset="utf-8">
     <title>Titre de la page</title>
-    <!--<link rel="stylesheet" href="style.css">-->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="infos">
 
 </div>
+<div style="display: none;" class="p_infos"><span id="j1"></span> points : <span class="j1_points">0</span> <input type="text" onkeypress="javascript:return false" name="keycode"/></div>
+<div style="display: none;" class="p_infos"><span id="j2"></span> points : <span class="j2_points">0</span> </div>
 <div id="game" style="display: none;">
 
 </div>
+<div id="clearfix"></div>
 <span id="timer" style="display: none;"></span>
 <form id="register">
     <input type="text" name="username" autofocus required placeholder="your username"/>
@@ -33,6 +36,49 @@
 <script>
     var socket = io();
     var user = {};
+
+
+    function getChar(event) {
+        if (event.which == null) {
+            return String.fromCharCode(event.keyCode) // IE
+        } else if (event.which!=0 && event.charCode!=0) {
+            return String.fromCharCode(event.which)   // the rest
+        } else {
+            return null // special key
+        }
+    }
+
+    socket.on('majPts', function (points) {
+        $('.j1_points').html(points.p1);
+        $('.j2_points').html(points.p2);
+    });
+
+    socket.on('sendLetter',function (letter) {
+        var w = window,
+                d = document,
+                e = d.documentElement,
+                g = d.getElementsByTagName('body')[0],
+                w = w.innerWidth || e.clientWidth || g.clientWidth,
+                h = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+        h = Math.floor(h*0.75);
+
+        $('#game').css('height', h + 'px');
+        $('#game').css('width', w + 'px');
+        $('#game').css('background-color','rgba('+letter.bg.r+','+letter.bg.g+','+letter.bg.b+',0.5)');
+        var y = (h - (20+letter.size))*(letter.y/100);
+        y = Math.floor(y);
+        var x = (w - (20+letter.size/2))*(letter.x /100);
+        x = Math.floor(x);
+        //console.log('x: '+x+' , y: ('+h+'-('+(20+letter.size)+'))*('+(letter.y/100)+');');
+        $('#game').html('<span id="'+letter.code+'-'+letter.letter+'" style="color: rgb('+letter.color.r+','+letter.color.g+','+letter.color.b+');font-size:'+letter.size+'px;font-family:'+letter.font+';font-style:'+letter.italic+';font-weight:'+letter.bold+';position:absolute;top:'+y+'px;left:'+x+'px;">'+letter.letter+'</span>')
+
+    });
+
+    $('input[name=keycode]').keypress(function (e) {
+        $(this).val(getChar(e));
+        socket.emit('keypressed',{letter: getChar(e), keycode: e.keyCode || e.which});
+    });
 
     $('#register').submit(function (e) {
         e.preventDefault();
@@ -71,7 +117,6 @@
     });
 
     socket.on('matched', function (match_id, callback) {
-        alert('Game finded');
 
 
         $('#infos').html('game matched !');
@@ -137,6 +182,9 @@
         $('#infos').html(p1_username+' versus '+p2_username);
         $('#game').show();
         $('#chat').html(' ');
+        $('#j1').html(p1_username);
+        $('#j2').html(p2_username);
+        $('.p_infos').show();
     });
 
     socket.on('leave', function (opp_username) {
