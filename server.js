@@ -120,7 +120,8 @@ io.on('connection', function(socket) {
         socket.opp = null;
 
         queue.push(socket);
-
+        console.log(queue);
+        console.log(queue.length);
         while(queue.length % 2 === 0 && queue.length >= 2){
             var p1 = queue[0], p2 = queue[1];
             queue.splice(0,2);
@@ -230,16 +231,12 @@ io.on('connection', function(socket) {
     });
 
     socket.on('keypressed', function (key) {
-        console.log(key);
         if(matchs.indexOfObj('id', socket.match) !== undefined) {
-            console.log('ok')
             var match_infos = matchs.indexOfObj('id', socket.match);
-            console.log(match_infos.letters.indexOfObj('done',false));
-            if (match_infos.letters.indexOfObj('done',false) != -1 && match_infos.letters.indexOfObj('done',false).code === key.keycode){
-                console.log('ok')
+            if (match_infos.letters.indexOfObj('done',false) != -1 && match_infos.letters.indexOfObj('done',false).code === key.code){
                 match_infos.letters.indexOfObj('done',false).done = true;
-
-                socket.id === match_infos.p1.id ? match_infos.p1.points++ : match_infos.p2.points++;
+                socket.points++;
+                //socket.id === match_infos.p1.id ? match_infos.p1.points++ : match_infos.p2.points++;
                 console.log({p1:match_infos.p1.points, p2:match_infos.p2.points});
                 var l = genLetter();
                 match_infos.letters.push(l);
@@ -247,7 +244,8 @@ io.on('connection', function(socket) {
                 io.to(match_infos.id).emit('majPts',{p1:match_infos.p1.points, p2:match_infos.p2.points});
             }
             else{
-                socket.id === match_infos.p1.id ? (match_infos.p1.points > 0 ? --match_infos.p1.points : match_infos.p1.points) : (match_infos.p2.points > 0 ? --match_infos.p2.points : match_infos.p2.points);
+                socket.points > 0 ? socket.points-- : socket.points;
+                //socket.id === match_infos.p1.id ? (match_infos.p1.points > 0 ? --match_infos.p1.points : match_infos.p1.points) : (match_infos.p2.points > 0 ? --match_infos.p2.points : match_infos.p2.points);
                 io.to(match_infos.id).emit('majPts',{p1:match_infos.p1.points, p2:match_infos.p2.points});
             }
         }
@@ -301,6 +299,7 @@ io.on('connection', function(socket) {
                             match_infos.p2.match = null;
                             match_infos.p2.state = 'WAITING';
                             match_infos.p2.emit('leave', match_infos.p1.username);
+                            match_infos.p2.emit('newMessage', messages);
                             break;
                         case 2:
                             match_infos.p1.leave(match_infos.id);
