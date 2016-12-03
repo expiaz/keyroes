@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>
+</head>
+<body>
+<div class="item"></div>
+<input type="text"/>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+
+    var container = document.getElementsByClassName('item')[0];
+    var input = document.getElementsByTagName('input')[0];
+    socket.on('recevoir', function (content) {
+        get(content);
+    });
+    function get(content){
+        container.innerHTML = content;
+    }
+
+    socket.on('fn_update', function (data) {
+        container.innerHTML = data;
+    });
+
+    input.addEventListener("keypress", function (e) {
+        socket.emit("update",input.value);
+    })
+</script>
+</body>
+</html>
