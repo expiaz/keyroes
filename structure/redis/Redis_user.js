@@ -1,13 +1,13 @@
 var Redis = require('./Redis_server');
 
 function isRegistered(id,fn){
-    Redis.get("user:"+id,function(err,res){
+    Redis.sscan("users","0","match",id,"count","1",function(err,replies){
         if(err) throw(err);
-        fn(res ? true : false );
+        fn(replies[1].length == 1);
     });
 }
 
-function setUser(user,fn){
+function addUser(user,fn){
     isRegistered(user.id,function(r){
         if(r){
             fn(true,"User already exists");
@@ -17,8 +17,8 @@ function setUser(user,fn){
                 .sadd("users",user.id)
                 .hmset("user:"+user.id,user)
                 .exec(function(err){
-                    if(err) fn(true,"Problem adding user "+user.id);
-                    else fn(false,user);
+                    if(err) throw(err);
+                    fn(false,user);
                 });
         }
     });
@@ -26,14 +26,18 @@ function setUser(user,fn){
 
 function getUser(id,fn){
     isRegistered(id,function(r){
-        fn(true,"User doesn't exists");
-        return;
+        if(r){
+            fn(true,"User doesn't exists");
+        }
+        else{
+            Redis.hgetall("user:"+id, function (err, res){
+                if(err) throw(err);
+                else fn(false,res);
+            });
+        }
     });
-    Redis.hgetall("user:"+id, function (err, res){
-        if(err) fn(true,"Problem retrieving user hset");
-        else fn(false,res);
-    });
+
 }
 
-module.exports.setUser = setUser;
+module.exports.addUser = addUser;
 module.exports.getUser = getUser;

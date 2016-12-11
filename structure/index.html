@@ -23,7 +23,7 @@
         });
     });
 
-    socket.on("error", function(err){
+    socket.on("server-error", function(err){
         container.innerHTML += "<div>"+err+"</div>";
     });
 
