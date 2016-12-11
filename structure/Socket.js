@@ -1,5 +1,5 @@
 var socketio = require('socket.io');
-var Dispatcher = ('./Dispatcher');
+var Dispatcher = require('./Dispatcher');
 
 function socketing(server){
     var io = socketio.listen(server);

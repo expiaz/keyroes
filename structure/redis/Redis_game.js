@@ -24,12 +24,12 @@ function addQueue(id,fn){
 function dropQueue(id,fn){
     isQueued(id,function(r){
         if(!r){
-            fn(true,"User isn't in queue");
+            //fn(true,"User isn't in queue");
         }
         else{
             Redis.srem("queue",id,function(err,res){
                 if(err) throw(err);
-                fn(res?true:false);
+                //fn(res?true:false);
             });
         }
     });
@@ -60,12 +60,8 @@ function triggerMma(fn){
             p1 = users[0];
             p2 = users[1];
             fn(false,"",true,{p1:p1,p2:p2});
-            dropQueue(p1, function(r){
-                //TODO add error handle
-            });
-            dropQueue(p2, function(r){
-                //TODO add error handle
-            });
+            dropQueue(p1);
+            dropQueue(p2);
         }
         else{
             fn(false,"",false,{});

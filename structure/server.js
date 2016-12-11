@@ -10,6 +10,6 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-var server = app.listen(2785);
+var server = app.listen(3000);
 
 socket(server);
