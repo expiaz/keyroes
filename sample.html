@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Titre de la page</title>
+</head>
+<body>
+<div class="item"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+
+    var container = document.getElementsByClassName('item')[0];
+
+    socket.on('socketid', function (content) {
+        container.innerHTML = content;
+    });
+</script>
+</body>
+</html>

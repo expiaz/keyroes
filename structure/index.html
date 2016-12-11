@@ -6,27 +6,27 @@
 </head>
 <body>
 <div class="item"></div>
-<input type="text"/>
+<input/>
+<button>Register</button>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     var socket = io();
 
     var container = document.getElementsByClassName('item')[0];
     var input = document.getElementsByTagName('input')[0];
-    socket.on('recevoir', function (content) {
-        get(content);
-    });
-    function get(content){
-        container.innerHTML = content;
-    }
+    var button = document.getElementsByTagName('button')[0]
 
-    socket.on('fn_update', function (data) {
-        container.innerHTML = data;
+    button.addEventListener("click", function (e) {
+        socket.emit("register",input.value,function(ack){
+            if(ack) container.innerHTML += "Registered !";
+            else container.innerHTML += "Fail !";
+        });
     });
 
-    input.addEventListener("keypress", function (e) {
-        socket.emit("update",input.value);
-    })
+    socket.on("error", function(err){
+        container.innerHTML += "<div>"+err+"</div>";
+    });
+
 </script>
 </body>
 </html>
