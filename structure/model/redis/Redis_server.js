@@ -6,7 +6,12 @@ client.on('error', function(err) {
 });
 
 client.on('connect', function() {
-    console.log('connected');
+    console.log('[REDIS] connected');
+});
+
+client.flushall(function(err,rep){
+    if(err) throw(err);
+    console.log('[REDIS:FLUSHALL] '+rep);
 });
 
 module.exports = client;
