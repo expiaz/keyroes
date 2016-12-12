@@ -1,4 +1,4 @@
-var Redis = require('./Redis_server');
+var Redis = require('./redis/Redis_server');
 
 module.exports.addQueue = addQueue;
 module.exports.dropQueue = dropQueue;

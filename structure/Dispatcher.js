@@ -1,4 +1,4 @@
-var Redis = require('./Redis');
+var Redis = require('./model/Model');
 var User = require('./User');
 
 module.exports.Register = Register;

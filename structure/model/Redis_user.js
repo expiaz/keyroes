@@ -1,4 +1,4 @@
-var Redis = require('./Redis_server');
+var Redis = require('./redis/Redis_server');
 
 function isRegistered(id,fn){
     Redis.sscan("users","0","match",id,"count","1",function(err,replies){
