@@ -32,13 +32,17 @@
         });
     });
 
-    socket.on('gameFound',function(fn){
+    socket.on('gameFound',function(){
         container.innerHTML = "Game found !";
-        fn(true);
     });
 
     socket.on("server-error", function(err){
         container.innerHTML += "<div>"+err+"</div>";
+    });
+
+    socket.on('gameFound_tick',function(props){
+        console.log('ticked');
+        container.innerHTML = props.time;
     });
 
 </script>

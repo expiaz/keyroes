@@ -2,12 +2,9 @@
 var User = function(socketid, username){
     this.id = socketid;
     this.username = username;
-
-    this.match = "";
+    this.match = 0;
     this.state = 'hall';
-    this.opp = "";
-    this.pn = "";
-    this.points = "";
+    this.answertomatch = -1;
 }
 
 module.exports = User;

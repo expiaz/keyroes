@@ -1,4 +1,4 @@
-var sql = require('./sql/Sql_server');
+var sql = require('./server');
 
 
 sql.query('SELECT * FROM keyroes.user', function(err, rows, fields) {

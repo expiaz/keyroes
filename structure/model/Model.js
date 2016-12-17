@@ -1,16 +1,16 @@
-var userModel = require('./Redis_user');
-var gameModel = require('./Redis_game');
+var userRedis = require('./redis/user');
+var gameRedis = require('./redis/game');
 
-var userSql = require('./Sql_user');
-var gameSql = require('./Sql_game');
+var userSql = require('./sql/user');
+var gameSql = require('./sql/game');
 
 var Redis = {
-    Users: userModel,
-    Game: gameModel
+    User: userRedis,
+    Game: gameRedis
 }
 
 var Sql = {
-    Users: userSql,
+    User: userSql,
     Game: gameSql
 }
 
