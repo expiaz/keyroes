@@ -27,10 +27,10 @@ function addLetter(game_id,letter,fn){
                 Redis.hmset("letter:"+lid,letter,function (err,res) {
                     if(err) throw(err);
                     fn(false,"Letter added");
-                })
-            })
+                });
+            });
         });
-    })
+    });
 }
 
 function getLetter(lid,fn){

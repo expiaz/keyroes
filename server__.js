@@ -321,10 +321,6 @@ io.on('connection', function(socket) {
         }
     });
 
-    /*users.forEach(function (element, index, array) {
-     console.log(element.id);
-     console.log(element.id_user);
-     });*/
 });
 
 http.listen(3000);

@@ -36,9 +36,9 @@ function triggerQueue(fn){
                     fn(true,res);
                     return;
                 }
-                fn(false,"",true,{p1:p1,p2:p2});
+                fn(false,"Done triggering queue : created",true,{p1:p1,p2:p2});
             });
         }
-        else fn(false,"",false);
+        else fn(false,"Done triggering queue : aborted",false);
     });
 }

@@ -1,10 +1,6 @@
 var User = require('./User');
 var Match = require('./Match');
 var Game = require('./Game');
-
-
-
-
 var Controllers = {
     User: require('./controllers/User'),
     Game: require('./controllers/Game'),
@@ -12,87 +8,21 @@ var Controllers = {
     Match: require('./controllers/Match')
 };
 
-
 var Dispatcher = {
-    Register: Register,
-    createMatch: createMatch,
+    registerHandler: register,
+    addQueueHandler: Controllers.Queue.Model.Redis.addQueue,
+    triggerStateHandler: Controllers.Queue.triggerQueue,
+    gameFoundcreateMatchHandler: gameFoundcreateMatch,
+    gameFoundPlayerAnswerHandler: gameFoundPlayerAnswer,
+    gameFoundPlayerAnswerCheckAnswersHandler: gameFoundPlayerAnswerCheckAnswers,
 
-    addQueue: Controllers.Queue.Model.Redis.addQueue,
-    triggerQueue: Controllers.Queue.triggerQueue,
     getMatch: Controllers.Match.Model.Redis.getMatch,
     getUser: Controllers.User.Model.Redis.getUser,
-    setMatch: Controllers.Match.Model.Redis.setMatch,
-    setUser: Controllers.User.Model.Redis.setUser,
-    delMatch: Controllers.Match.Model.Redis.delMatch,
-    setUsers: Controllers.User.setUsers
-}
 
+}
 module.exports = Dispatcher;
 
-
-
-/*
-function addQueue(id,fn){
-    Controllers.Queue.Model.Redis.addQueue(id,function(err,msg){
-        if(err) fn(true,msg);
-        else{
-            fn(false,"added to queue");
-        }
-    });
-}
-
-function triggerQueue(fn){
-    Controllers.Queue.triggerQueue(function(err,msg,ack,players){
-        if(err) fn(true,msg);
-        else fn(false,msg,ack,players);
-    });
-}
-
-function getMatch(id,fn){
-    Controllers.Match.Model.Redis.getMatch(id,function (err,fetch_match) {
-        if(err) fn(true,fetch_match);
-        else fn(false,fetch_match);
-    });
-}
-
-function getUser(id,fn){
-    Controllers.User.Model.Redis.getUser(id,function (err,rep) {
-        if(err) fn(true,rep);
-        else fn(false,rep);
-    });
-}
-
-function setMatch(id,prop,value,fn){
-    Controllers.Match.Model.Redis.setMatch(id,prop,value,function (err,rep) {
-        if(err) fn(true,rep);
-        else fn(false,rep);
-    });
-}
-
-function setUser(id,props,fn){
-    Controllers.User.Model.Redis.setUser(id,props,function (err,rep) {
-        if(err) fn(true,rep);
-        else fn(false,rep);
-    });
-}
-
-function delMatch(id,fn) {
-    Controllers.Match.Model.Redis.delMatch(id,function (err,rep) {
-        if(err) fn(true,rep);
-        else fn(false,rep);
-    });
-}
-
-function setUsers(ids,props,fn){
-    Controllers.User.setUsers(ids,props,function (err,res) {
-        if(err) fn(true,res);
-        else fn(false,res);
-    });
-}
-*/
-
-
-function Register(id,username,fn){
+function register(id,username,fn){
     var user = new User(id,username);
     Controllers.User.Model.Redis.addUser(user,function(e,r){
         if(e) fn(e,r);
@@ -100,8 +30,7 @@ function Register(id,username,fn){
     });
 }
 
-function createMatch(ids,fn){
-
+function gameFoundcreateMatch(ids,fn){
     Controllers.User.getUsers(ids, function(err,users){
         if(err){
             fn(true,"Pb retieving the users (createMatch)");
@@ -130,6 +59,79 @@ function createMatch(ids,fn){
                     return;
                 }
                 fn(false,match.id);
+            });
+        });
+    })
+}
+
+function gameFoundPlayerAnswer(player_id,answer,fn){
+
+    Controllers.User.Model.Redis.getUser(player_id,function (err,fetch_user) {
+        if(err){
+            fn(true,fetch_user);
+            return;
+        }
+        var a = answer?1:0;
+        Controllers.User.Model.Redis.setUser(fetch_user.id,{answertomatch:a},function (err,res) {
+            if(err){
+                fn(true,res);
+                return;
+            }
+            Controllers.Match.Model.Redis.getMatch(fetch_user.match,function(err,fetch_match){
+                if(err){
+                    fn(true,res);
+                    return;
+                }
+                var props = fetch_user.id == fetch_match.p1 ? {p1_answer:a} : {p2_answer:a};
+                Controllers.Match.Model.Redis.setMatch(fetch_user.match,props,function(err,rep){
+                    if(err){
+                        fn(true,rep);
+                        return;
+                    }
+                    fn(false,"User & Match hashes updates (gameFoud)");
+                });
+            });
+        });
+    })
+
+
+}
+
+function gameFoundPlayerAnswerCheckAnswers(player_id,fn){
+    //getMatch
+    Controllers.User.Model.Redis.getUser(player_id,function (err,fetch_user) {
+        if(err){
+            fn(true,fetch_user);
+            return;
+        }
+        Controllers.Match.Model.Redis.getMatch(fetch_user.match,function (err,fetch_match) {
+            if(err){
+                fn(true,fetch_match);
+                return;
+            }
+            var props,
+                acceptance = parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer);
+            if(acceptance) props = {
+                    state: 'IN_GAME'
+                };
+            else props = {
+                    match:0,
+                    state: 'HALL',
+                    answertomatch: -1
+                };
+
+            Controllers.User.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
+                if(err){
+                    fn(true,rep);
+                    return;
+                }
+                Controllers.Match.Model.Redis.delMatch(fetch_match.id,function(err,rep){
+                    if(err){
+                        fn(true,rep);
+                        return;
+                    }
+                    fn(false,{p1:fetch_match.p1,p2:fetch_match.p2},acceptance);
+                });
             });
         });
     })

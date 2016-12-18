@@ -16,7 +16,6 @@ function isQueued(id,fn){
 }
 
 function getQueue(fn){
-    //fn(err,msg,trigger,players)
     Redis.smembers("queue",function(err,users){
         if(err) throw(err);
         fn(false,users);
@@ -35,7 +34,6 @@ function addQueue(id,fn){
                 .exec(function(err){
                     if(err) throw(err);
                     fn(false,"User added in queue");
-                    //triggerMma(fn);
                 });
         }
     });
@@ -50,7 +48,6 @@ function dropQueue(id,fn){
         else{
             Redis.srem("queue",id,function(err,res){
                 if(err) throw(err);
-                console.log(id+" deleted from queue ("+ (res?false:true) +")");
                 fn(res?false:true);
             });
         }

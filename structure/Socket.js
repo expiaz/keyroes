@@ -33,6 +33,11 @@ function socketing(server){
         var user,
             connected = io.sockets.connected;
 
+        function error(err){
+            console.log("server-error report : "+err);
+            socket.emit("server-error",err);
+        }
+
         function Hydrate(fn){
             Dispatcher.getUser(socket.id,function (err,fetch_user) {
                 if(err){
@@ -47,13 +52,8 @@ function socketing(server){
             });
         }
 
-        function error(err){
-            console.log("server-error report : "+err);
-            socket.emit("server-error",err);
-        }
-
         socket.on('register', function (username,fn) {
-            Dispatcher.Register(socket.id,username,function(e,r){
+            Dispatcher.registerHandler(socket.id,username,function(e,r){
                 if(e){
                     error(r);
                     fn(false);
@@ -70,24 +70,68 @@ function socketing(server){
             });
         });
 
-        socket.on('addMma', function(fn)  {
+        socket.on('addQueue', function(fn)  {
             if(!user.id){
                 error("You must be logged in to join mma");
                 return;
             }
-            Dispatcher.addQueue(socket.id, function(e, r){
-                if(e){
-                    error(r);
+            Dispatcher.addQueueHandler(socket.id, function(err, res){
+                if(err){
+                    error(res);
                     fn(false);
                 }
                 else{
                     fn(true);
-                    queueState();
+                    triggerQueue();
                 }
             });
         });
 
-        socket.on('gameFound_answer', function(answer){
+        function triggerQueue(){
+            Dispatcher.triggerStateHandler(function (err,res,matched,players) {
+                if(err){
+                    error(res);
+                    return;
+                }
+                if(matched) gameFoundcreateMatch(players);
+            });
+        }
+
+        function gameFoundcreateMatch(players){
+            Dispatcher.gameFoundcreateMatchHandler([players.p1,players.p2],function(err,rep){
+                if(err){
+                    error(rep);
+                    return;
+                }
+                matchmaking_angle = 0;
+                matchmaking_timer.on('ontick',sendMatchTick);
+                matchmaking_timer.on('end',gameFoundAnswerCheckAnswers);
+                matchmaking_timer.start(5);
+                connected[players.p1].emit('gameFound');
+                connected[players.p2].emit('gameFound');
+            });
+        }
+
+        function sendMatchTick(millis){
+            Hydrate(function (err,res){
+                if(err){
+                    error(err);
+                    return;
+                }
+                Dispatcher.getMatch(user.match,function (err,fetch_match) {
+                    if(err){
+                        error(fetch_match);
+                        return;
+                    }
+                    var time = (millis/1000).toFixed(1);
+                    matchmaking_angle += matchmaking_incrementAngle;
+                    connected[fetch_match.p1].emit('gameFoundTick',{angle:matchmaking_angle,time:time});
+                    connected[fetch_match.p2].emit('gameFoundTick',{angle:matchmaking_angle,time:time});
+                });
+            });
+        }
+
+        socket.on('gameFoundPlayerAnswer', function(answer){
             Hydrate(function (err,res) {
                 if(err){
                     error(res);
@@ -105,128 +149,27 @@ function socketing(server){
                     error("You already "+ (parseInt(user.answertomatch) ? 'accepted' : 'declined') + " this match");
                     return;
                 }
-                var a = answer?1:0;
-                Dispatcher.setUser(user.id,{answertomatch:a},function (err,res) {
-                    if(err){
-                        error(res);
-                        return;
-                    }
-                    Dispatcher.getMatch(user.match,function(err,fetch_match){
-                        if(err){
-                            error(res);
-                            return;
-                        }
-                        var props = socket.id == fetch_match.p1 ? {p1_answer:a} : {p2_answer:a};
-                        Dispatcher.setMatch(user.match,props,function(err,rep){
-                            if(err) error(rep);
-                        });
-                    });
+                Dispatcher.gameFoundPlayerAnswerHandler(socket.id,answer,function (err,res) {
+                    if(err) error(res);
                 });
             });
         });
 
-        function queueState(){
-            Dispatcher.triggerQueue(function(err,res,ack,players){
-                if(err){
-                    error(res);
-                    return;
-                }
-                if(ack) createMatch(players);
-            });
-        }
-
-        function createMatch(players){
-            console.log("createMatch");
-
-            connected[players.p1].emit('gameFound');
-            connected[players.p2].emit('gameFound');
-
-            Dispatcher.createMatch([players.p1,players.p2],function(err,rep){
-                if(err){
-                    error(rep);
-                    return;
-                }
-                matchmaking_angle = 0;
-                matchmaking_timer.on('ontick',sendMatchTick);
-                matchmaking_timer.on('end',createMatchHandler);
-                matchmaking_timer.start(5);
-            });
-        }
-
-        function sendMatchTick(millis){
-            Hydrate(function (err,res){
-                if(err){
-                    error(err);
-                    return;
-                }
-                Dispatcher.getMatch(user.match,function (err,fetch_match) {
-                    if(err){
-                        error(fetch_match);
-                        return;
-                    }
-                    var time = (millis/1000).toFixed(1);
-                    matchmaking_angle += matchmaking_incrementAngle;
-                    connected[fetch_match.p1].emit('gameFound_tick',{angle:matchmaking_angle,time:time});
-                    connected[fetch_match.p2].emit('gameFound_tick',{angle:matchmaking_angle,time:time});
-                });
-            });
-        }
-
-        function createMatchHandler(){
-            console.log("createMatchHandler");
-            // create a game or not deciding from users answers
+        function gameFoundAnswerCheckAnswers(){
             Hydrate(function (err,res) {
                 if(err){
                     error(res);
                     return;
                 }
-                Dispatcher.getMatch(user.match,function (err,fetch_match) {
+                Dispatcher.gameFoundPlayerAnswerCheckAnswersHandler(socket.id,function (err,players,isMatchCreated) {
                     if(err){
-                        error(fetch_match);
+                        error(players);
                         return;
                     }
-                    //console.log(parseInt(fetch_match.p1_answer)+" && "+parseInt(fetch_match.p2_answer)+" = "+(parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer)))
-                    if(parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer)){
-                        var props = {
-                            state: 'IN_GAME'
-                        }
-                        Dispatcher.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
-                            if(err){
-                                error(rep);
-                                return;
-                            }
-                            Dispatcher.delMatch(fetch_match.id,function(err,rep){
-                                if(err){
-                                    error(rep);
-                                    return;
-                                }
-                                connected[fetch_match.p1].emit('accepted');
-                                connected[fetch_match.p2].emit('accepted');
-                                createGame([fetch_match.p1,fetch_match.p2]);
-                            });
-                        });
-                    }
-                    else{
-                        var props = {
-                            match:0,
-                            state: 'HALL',
-                            answertomatch: -1
-                        }
-                        Dispatcher.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
-                            if(err){
-                                error(rep);
-                                return;
-                            }
-                            Dispatcher.delMatch(fetch_match.id,function(err,rep){
-                                if(err){
-                                    error(rep);
-                                    return;
-                                }
-                                connected[fetch_match.p1].emit('declined');
-                                connected[fetch_match.p2].emit('declined');
-                            });
-                        });
-                    }
+                    var created = isMatchCreated ? 'accepted' : 'declined';
+                    connected[players.p1].emit(created);
+                    connected[players.p2].emit(created);
+                    if(isMatchCreated) createGame([players.p1,players.p2]);
                 });
             });
         }

@@ -28,7 +28,6 @@ function getMatch(id,fn){
 
 function delMatch(id,fn){
     Redis.del("match:"+id,function(err,res){
-        console.log("delMatch : "+res);
         if(err) throw(err);
         fn(res?false:true);
     });

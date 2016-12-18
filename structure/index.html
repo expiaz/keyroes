@@ -45,7 +45,6 @@
     }
 
     button.click(function (e) {
-        console.log("Register");
         socket.emit("register",input.val(),function(ack){
             if(ack){
                 container.append("Registered !");
@@ -55,7 +54,7 @@
     })
 
     mma.click(function (e) {
-        socket.emit("addMma",function(ack){
+        socket.emit("addQueue",function(ack){
             if(ack){
                 mma.hide();
                 container.html("In queue !");
@@ -90,7 +89,7 @@
         container.append("<div>"+err+"</div>");
     });
 
-    socket.on('gameFound_tick',function(props){
+    socket.on('gameFoundTick',function(props){
         console.log(props.angle);
         circle.circleProgress('value',props.angle);
         timer.html(props.time);
@@ -107,13 +106,13 @@
     });
 
     matchcontrollers.accept.click(function (e) {
-        socket.emit('gameFound_answer',true);
+        socket.emit('gameFoundPlayerAnswer',1);
         matchcontrollers.accept.hide();
         matchcontrollers.decline.hide();
     });
 
     matchcontrollers.decline.click(function (e) {
-        socket.emit('gameFound_answer',false);
+        socket.emit('gameFoundPlayerAnswer',0);
         matchcontrollers.accept.hide();
         matchcontrollers.decline.hide();
     });
