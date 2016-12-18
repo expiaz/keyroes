@@ -11,9 +11,12 @@ module.exports = Game;
 
 
 function addGame(game,fn){
-    Redis.hmset("match:"+game.id,game,function(err,rep){
+    Redis.set("count_letters:"+game.id,0,function (err,rep) {
         if(err) throw(err);
-        fn(false,rep);
+        Redis.hmset("game:"+game.id,game,function(err,rep){
+            if(err) throw(err);
+            fn(false,rep);
+        });
     });
 }
 

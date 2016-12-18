@@ -31,7 +31,7 @@ function addQueue(id,fn){
         else{
             Redis.multi()
                 .sadd("queue",id)
-                .hset("user:"+id,"state","queue")
+                .hmset("user:"+id,{state:"QUEUE"})
                 .exec(function(err){
                     if(err) throw(err);
                     fn(false,"User added in queue");

@@ -21,8 +21,8 @@
     <div id="timer"></div>
 </div>
 <div class="item"></div>
-<input/>
-<button>Register</button>
+<input name="username"/>
+<button id="register">Register</button>
 <button class="mma">Join mma</button>
 <button class="match-controllers-accept" style="display: none;">accept</button>
 <button class="match-controllers-decline" style="display: none;">decline</button>
@@ -32,34 +32,35 @@
 <script>
     var socket = io();
 
-    var container = document.getElementsByClassName('item')[0];
-    var input = document.getElementsByTagName('input')[0];
-    var button = document.getElementsByTagName('button')[0];
-    var mma = document.getElementsByClassName('mma')[0];
+    var container = $('.item');
+    var input = $('input[name=username]');
+    var button = $('#register');
+    var mma = $('.mma');
     var circle = $('#circle');
     var timer = $('#timer');
 
     var matchcontrollers = {
-        accept: document.getElementsByClassName('match-controllers-accept')[0],
-        decline: document.getElementsByClassName('match-controllers-decline')[0],
+        accept: $('.match-controllers-accept'),
+        decline: $('.match-controllers-decline')
     }
 
-    button.addEventListener("click", function (e) {
-        socket.emit("register",input.value,function(ack){
+    button.click(function (e) {
+        console.log("Register");
+        socket.emit("register",input.val(),function(ack){
             if(ack){
-                container.innerHTML += "Registered !";
-                button.style.display = 'none';
+                container.append("Registered !");
+                button.hide();
             }
         });
-    });
+    })
 
-    mma.addEventListener("click", function (e) {
+    mma.click(function (e) {
         socket.emit("addMma",function(ack){
             if(ack){
-                mma.style.display = 'none';
-                container.innerHTML = "In queue !";
+                mma.hide();
+                container.html("In queue !");
             }
-            else container.innerHTML = "Fail joining queue !";
+            else container.html("Fail joining queue !");
 
         });
     });
@@ -80,41 +81,41 @@
 
         circle.show();
 
-        container.innerHTML = "Game found !";
-        matchcontrollers.accept.style.display = 'inline';
-        matchcontrollers.decline.style.display = 'inline';
+        container.html("Game found !");
+        matchcontrollers.accept.show();
+        matchcontrollers.decline.show();
     });
 
     socket.on("server-error", function(err){
-        container.innerHTML += "<div>"+err+"</div>";
+        container.append("<div>"+err+"</div>");
     });
 
     socket.on('gameFound_tick',function(props){
         console.log(props.angle);
         circle.circleProgress('value',props.angle);
-        timer.innerHTML = props.time;
+        timer.html(props.time);
     });
 
     socket.on('declined', function () {
-        container.innerHTML = "The match has been declined";
+        container.html("The match has been declined");
         circle.hide();
     });
 
     socket.on('accepted', function () {
-        container.innerHTML = "The match will now begin";
+        container.html("The match will now begin");
         circle.hide();
     });
 
-    matchcontrollers.accept.addEventListener("click", function (e) {
+    matchcontrollers.accept.click(function (e) {
         socket.emit('gameFound_answer',true);
-        matchcontrollers.accept.style.display = 'none';
-        matchcontrollers.decline.style.display = 'none';
+        matchcontrollers.accept.hide();
+        matchcontrollers.decline.hide();
     });
 
-    matchcontrollers.decline.addEventListener("click", function (e) {
+    matchcontrollers.decline.click(function (e) {
         socket.emit('gameFound_answer',false);
-        matchcontrollers.accept.style.display = 'none';
-        matchcontrollers.decline.style.display = 'none';
+        matchcontrollers.accept.hide();
+        matchcontrollers.decline.hide();
     });
 
 </script>
