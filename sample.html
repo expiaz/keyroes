@@ -12,8 +12,12 @@
 
     var container = document.getElementsByClassName('item')[0];
 
-    socket.on('socketid', function (content) {
-        container.innerHTML = content;
+    socket.on('connect', function () {
+        container.innerHTML = "connected";
+    });
+
+    socket.on('yo', function () {
+        container.innerHTML = "yo";
     });
 </script>
 </body>

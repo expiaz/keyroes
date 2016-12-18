@@ -4,18 +4,36 @@ var mdtimer = require('timer.js');
 /* TODO EVERYTHING */
 function socketing(server){
     var io = socketio.listen(server);
-    var timer = new mdtimer({
-        tick : 0.1
-    });
-    timer.start(5);
-    timer.pause();
-    var z = io.on('connection', function(socket) {
+
+
+
+    io.on('connection', function(socket) {
+        //Handler(socket.id);
+
+        /*mma timer*/
+        const matchmaking_time = 5,
+              matchmaking_incrementAngle = 0.02;
+        var matchmaking_angle,
+            matchmaking_timer = new mdtimer({
+                tick : 0.1
+            });
+        matchmaking_timer.start(matchmaking_time);
+        matchmaking_timer.pause();
+
+        /*game timer*/
+        const game_time = 60,
+            game_incrementAngle = 0.017;
+        var game_angle,
+            game_timer = new mdtimer({
+                tick : 1
+            });
+        game_timer.start(game_time);
+        game_timer.pause();
+
         var user,
             match,
             connected = io.sockets.connected;
 
-        const time = 5;
-        var angle;
         function error(err){
             console.log("server-error report : "+err);
             socket.emit("server-error",err);
@@ -40,153 +58,180 @@ function socketing(server){
                 return;
             }
             /* todo split add and trigger queue in two parts */
-            Dispatcher.addQueue(user.id, function(e, r, triggered, players){
+            Dispatcher.addQueue(socket.id, function(e, r){
                 if(e){
                     error(r);
                     fn(false);
                 }
-                else fn(true);
-                if(triggered) createMatch(players);
-            });
-        });
-
-
-
-        function createMatch(players){
-
-            connected[players.p1].emit('gameFound');
-            connected[players.p2].emit('gameFound');
-
-
-            console.log("players : ");
-            console.log(players);
-
-            Dispatcher.addMatch([players.p1,players.p2],function(err,rep){
-                if(err) error(rep);
-                else match = rep;
-            });
-            match = players.p1+""+players.p2;
-
-            timer.on('end',createMatchHandler);
-            angle = 0.02;
-            timer.start();
-        }
-
-
-        timer.on('ontick',function (millis) {
-            console.log('ticked');
-            angle += 0.02;
-            Dispatcher.getUser(user.id,function (err,res){
-                if(err) error(res);
                 else{
-                    Dispatcher.getMatch(res.match,function (err,mtch) {
-                        console.log(mtch);
-                        if(err) error(mtch);
-                        else{
-                            var time = (millis/1000).toFixed(1);
-                            connected[mtch.p1].emit('gameFound_tick',{angle:angle,time:time});
-                            connected[mtch.p2].emit('gameFound_tick',{angle:angle,time:time});
-                        }
-                    })
+                    fn(true);
+                    queueState();
                 }
-            })
-
+            });
         });
-
-
-        /*
-        TODO : WAIT LA FIN DU TEMPS (go callback timer) POUR VOIR LE STATE DES JOUEURS ET UPDATE EN FONCTION
-         */
-
-        /*
-        TODO : create global functions as setUsers or getUsers etc.... with array of ids in arg instead of a single one
-         */
 
         socket.on('gameFound_answer', function(answer){
-            console.log("game found answer");
             if(user === undefined){
                 error("You must be logged in to join mma");
                 return;
             }
-            else if(match === undefined){
-                error("You must be matched to join one");
-                return;
-            }
-            else if(user.answertomatch != -1){
-                error("You already "+ (user.answertomatch ? 'accepted' : 'declined') + " this match");
-                return;
-            }
-            user.answertomatch = answer;
-            Dispatcher.getMatch(match,function(err,mtch){
-                var pn = user.id == mtch.p1 ? 'p1_answer' : 'p2_answer';
-                Dispatcher.setMatch(match,pn,answer,function(err,rep){
-                    if(err) error(rep);
+            Dispatcher.getUser(socket.id,function (err,fetch_user) {
+                console.log(fetch_user);
+                if(err) {
+                    error(fetch_user);
+                    return;
+               }
+               if(parseInt(fetch_user.match) == 0){
+                   error("You must be matched to join one");
+                   return;
+               }
+               if(parseInt(fetch_user.answertomatch) != -1){
+                   error("You already "+ (parseInt(fetch_user.answertomatch) ? 'accepted' : 'declined') + " this match");
+                   return;
+               }
+               var a = answer?1:0;
+               Dispatcher.setUser(fetch_user.id,{answertomatch:a},function (err,res) {
+                   if(err){
+                       error(res);
+                       return;
+                   }
+                   Dispatcher.getMatch(fetch_user.match,function(err,fetch_match){
+                       if(err){
+                           error(res);
+                           return;
+                       }
+                       var props = socket.id == fetch_match.p1 ? {p1_answer:a} : {p2_answer:a};
+                       console.log("game found answer "+socket.id+" : (pn) ");
+                       console.log(props);
+                       Dispatcher.setMatch(fetch_user.match,props,function(err,rep){
+                           if(err) error(rep);
+                       });
+                   });
+               });
+            });
+        });
+
+        function queueState(){
+            Dispatcher.triggerQueue(function(err,res,ack,players){
+                if(err){
+                    error(res);
+                    return;
+                }
+                if(ack) createMatch(players);
+            });
+        }
+
+        function createMatch(players){
+            console.log("createMatch");
+
+            connected[players.p1].emit('gameFound');
+            connected[players.p2].emit('gameFound');
+
+            Dispatcher.createMatch([players.p1,players.p2],function(err,rep){
+                if(err){
+                    error(rep);
+                    return;
+                }
+                matchmaking_angle = 0;
+                matchmaking_timer.on('ontick',sendMatchTick);
+                matchmaking_timer.on('end',createMatchHandler);
+                matchmaking_timer.start(5);
+            });
+        }
+
+        function sendMatchTick(millis){
+            Dispatcher.getUser(socket.id,function (err,fetch_user){
+                if(err){
+                    error(res);
+                    return;
+                }
+                Dispatcher.getMatch(fetch_user.match,function (err,fetch_match) {
+                    if(err){
+                        error(fetch_match);
+                        return;
+                    }
+                    var time = (millis/1000).toFixed(1);
+                    matchmaking_angle += matchmaking_incrementAngle;
+                    connected[fetch_match.p1].emit('gameFound_tick',{angle:matchmaking_angle,time:time});
+                    connected[fetch_match.p2].emit('gameFound_tick',{angle:matchmaking_angle,time:time});
                 });
             });
-        }); //true
-
-
+        }
 
         function createMatchHandler(){
-            timer = undefined;
             console.log("createMatchHandler");
             // create a game or not deciding from users answers
-            Dispatcher.getMatch(match,function (err,mtch) {
-                if(err) error(mtch);
-                else{
-                    console.log(mtch);
-                    switch(mtch.p1_answer && mtch.p2_answer){
-                        case 0:
-                            var props = {
-                                match:0,
-                                state: 'hall',
-                                answertomatch: -1
-                            }
-                            Dispatcher.setUser(mtch.p1,props,function (err,rep) {
-                                if(err) error(rep);
-                                else{
-                                    Dispatcher.setUser(mtch.p2,props,function (err,rep) {
-                                        if(err) error(rep);
-                                        else{
-                                            connected[mtch.p1].emit('declined');
-                                            connected[mtch.p2].emit('declined');
-                                        }
-                                    });
-                                }
-                            });
-
-                            break;
-                        case 1:
-                            var props = {
-                                match:mtch.p1+""+mtch.p2,
-                                state: 'ingame',
-                            }
-                            Dispatcher.setUser(mtch.p1,props,function (err,rep) {
-                                if(err) error(rep);
-                                else{
-                                    Dispatcher.setUser(mtch.p2,props,function (err,rep) {
-                                        if(err) error(rep);
-                                        else{
-                                            connected[mtch.p1].emit('accepted');
-                                            connected[mtch.p2].emit('accepted');
-                                            createGame([mtch.p1,mtch.p2]);
-                                        }
-                                    });
-                                }
-                            });
-                            break;
-                    }
+            Dispatcher.getUser(socket.id,function (err,fetch_user) {
+                if(err){
+                    error(fetch_user);
+                    return;
                 }
+                Dispatcher.getMatch(fetch_user.match,function (err,fetch_match) {
+                    if(err){
+                        error(fetch_match);
+                        return;
+                    }
+                    console.log(parseInt(fetch_match.p1_answer)+" && "+parseInt(fetch_match.p2_answer)+" = "+(parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer)))
+                    if(parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer)){
+                        var props = {
+                            state: 'IN_GAME'
+                        }
+                        Dispatcher.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
+                            if(err){
+                                error(rep);
+                                return;
+                            }
+                            Dispatcher.delMatch(fetch_match.id,function(err,rep){
+                                if(err){
+                                    error(rep);
+                                    return;
+                                }
+                                connected[fetch_match.p1].emit('accepted');
+                                connected[fetch_match.p2].emit('accepted');
+                                createGame([fetch_match.p1,fetch_match.p2]);
+                            });
+                        });
+                    }
+                    else{
+                        var props = {
+                            match:0,
+                            state: 'HALL',
+                            answertomatch: -1
+                        }
+                        Dispatcher.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
+                            if(err){
+                                error(rep);
+                                return;
+                            }
+                            Dispatcher.delMatch(fetch_match.id,function(err,rep){
+                                if(err){
+                                    error(rep);
+                                    return;
+                                }
+                                connected[fetch_match.p1].emit('declined');
+                                connected[fetch_match.p2].emit('declined');
+                            });
+                        });
+                    }
+                });
             });
         }
 
         function createGame(ids){
-
+            console.log("createGame");
         }
 
-
-
     });
+
+
+
+
+
+    function Handler(sid){
+        self = sid;
+    }
+
+
 
 }
 

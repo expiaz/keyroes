@@ -11,10 +11,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/sample.html');
 });
-var sockets;
-io.on('connection', function(socket) {
-    sockets = io.sockets.connected;
-});
-module.exports.sockets = sockets;
+
+(function(){
+    io.on('connection', function(socket) {
+        SetState(socket);
+    });
+
+    var SetState = function(socket){
+        console.log(io.sockets.connected);
+        socket.emit("yo");
+    }
+})();
+
+
+
+//console.log(io.sockets.connected);
+
+
 
 http.listen(3000);

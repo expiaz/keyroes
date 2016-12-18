@@ -4,12 +4,31 @@
     <meta charset="utf-8">
     <title>Titre de la page</title>
 </head>
+<style>
+    #circle{
+        position: relative;
+        width:80px;
+        height:80px;
+    }
+    #timer{
+        position: absolute;
+        top: 30px;
+        left: 30px;
+    }
+</style>
 <body>
+<div id="circle" style="display: none">
+    <div id="timer"></div>
+</div>
 <div class="item"></div>
 <input/>
 <button>Register</button>
 <button class="mma">Join mma</button>
-<script src="/socket.io/socket.io.js"></script>
+<button class="match-controllers-accept" style="display: none;">accept</button>
+<button class="match-controllers-decline" style="display: none;">decline</button>
+<script src="/socket.io/socket.io.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" type="text/javascript"></script>
+<script src="/vendor/jquery-circle-progress/dist/circle-progress.js" type="text/javascript"></script>
 <script>
     var socket = io();
 
@@ -17,23 +36,53 @@
     var input = document.getElementsByTagName('input')[0];
     var button = document.getElementsByTagName('button')[0];
     var mma = document.getElementsByClassName('mma')[0];
+    var circle = $('#circle');
+    var timer = $('#timer');
+
+    var matchcontrollers = {
+        accept: document.getElementsByClassName('match-controllers-accept')[0],
+        decline: document.getElementsByClassName('match-controllers-decline')[0],
+    }
 
     button.addEventListener("click", function (e) {
         socket.emit("register",input.value,function(ack){
-            if(ack) container.innerHTML += "Registered !";
-            else container.innerHTML += "Fail !";
+            if(ack){
+                container.innerHTML += "Registered !";
+                button.style.display = 'none';
+            }
         });
     });
 
     mma.addEventListener("click", function (e) {
         socket.emit("addMma",function(ack){
-            if(ack) container.innerHTML = "In queue !";
+            if(ack){
+                mma.style.display = 'none';
+                container.innerHTML = "In queue !";
+            }
             else container.innerHTML = "Fail joining queue !";
+
         });
     });
 
     socket.on('gameFound',function(){
+
+        circle.circleProgress({
+            value: 0,
+            size: 80,
+            fill: "rgba(0, 0, 0, .1)",
+            emptyFill: "#000000",
+            animation: {
+                duration: 100,
+                easing: "linear"
+            },
+            startAngle: - Math.PI / 2
+        });
+
+        circle.show();
+
         container.innerHTML = "Game found !";
+        matchcontrollers.accept.style.display = 'inline';
+        matchcontrollers.decline.style.display = 'inline';
     });
 
     socket.on("server-error", function(err){
@@ -41,8 +90,31 @@
     });
 
     socket.on('gameFound_tick',function(props){
-        console.log('ticked');
-        container.innerHTML = props.time;
+        console.log(props.angle);
+        circle.circleProgress('value',props.angle);
+        timer.innerHTML = props.time;
+    });
+
+    socket.on('declined', function () {
+        container.innerHTML = "The match has been declined";
+        circle.hide();
+    });
+
+    socket.on('accepted', function () {
+        container.innerHTML = "The match will now begin";
+        circle.hide();
+    });
+
+    matchcontrollers.accept.addEventListener("click", function (e) {
+        socket.emit('gameFound_answer',true);
+        matchcontrollers.accept.style.display = 'none';
+        matchcontrollers.decline.style.display = 'none';
+    });
+
+    matchcontrollers.decline.addEventListener("click", function (e) {
+        socket.emit('gameFound_answer',false);
+        matchcontrollers.accept.style.display = 'none';
+        matchcontrollers.decline.style.display = 'none';
     });
 
 </script>

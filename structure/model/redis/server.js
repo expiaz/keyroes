@@ -9,9 +9,9 @@ client.on('connect', function() {
     console.log('[REDIS] connected');
 });
 
-client.flushall(function(err,rep){
+client.flushdb(function(err,rep){
     if(err) throw(err);
-    console.log('[REDIS:FLUSHALL] '+rep);
+    console.log('[REDIS:FLUSHDB] '+rep);
 });
 
 module.exports = client;

@@ -9,7 +9,7 @@ var Queue = {
 module.exports = Queue;
 
 function isQueued(id,fn){
-    Redis.sscan("queue","0","match",id,"count","1",function(err,replies){
+    Redis.sscan("queue","0","match",id,"count","999",function(err,replies){
         if(err) throw(err);
         fn(replies[1].length == 1);
     });

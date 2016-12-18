@@ -10,8 +10,11 @@ var Game = {
 module.exports = Game;
 
 
-function addGame(players,fn){
-    // fn(err,game_id,players)
+function addGame(game,fn){
+    Redis.hmset("match:"+game.id,game,function(err,rep){
+        if(err) throw(err);
+        fn(false,rep);
+    });
 }
 
 function getGame() {

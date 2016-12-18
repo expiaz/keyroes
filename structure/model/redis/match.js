@@ -10,7 +10,6 @@ var Match = {
 
 module.exports = Match;
 
-
 function addMatch(match,fn){
     Redis.hmset("match:"+match.id,match,function(err,rep){
         if(err) throw(err);
@@ -21,16 +20,17 @@ function addMatch(match,fn){
 function getMatch(id,fn){
     Redis.hgetall("match:"+id, function (err, match){
         if(err) throw(err);
-        console.log(" redis get the match ");
-        console.log(match)
+        //console.log(" redis get the match ");
+        //console.log(match)
         fn(false,match);
     });
 }
 
 function delMatch(id,fn){
     Redis.del("match:"+id,function(err,res){
+        console.log("delMatch : "+res);
         if(err) throw(err);
-        fn(res?true:false);
+        fn(res?false:true);
     });
 }
 
