@@ -64,7 +64,10 @@ function socketing(server){
                             error(res);
                             fn(false);
                         }
-                        else fn(true);
+                        else{
+                            socket.join('HALL');
+                            fn(true);
+                        }
                     });
                 }
             });
@@ -166,16 +169,99 @@ function socketing(server){
                         error(players);
                         return;
                     }
-                    var created = isMatchCreated ? 'accepted' : 'declined';
+                    var created = isMatchCreated ? 'gameFoundAccepted' : 'gameFoundDeclined';
                     connected[players.p1].emit(created);
                     connected[players.p2].emit(created);
-                    if(isMatchCreated) createGame([players.p1,players.p2]);
+                    if(isMatchCreated) createGame(players);
                 });
             });
         }
 
-        function createGame(ids){
+        function createGame(players){
             console.log("createGame");
+            Dispatcher.createGameHandler(players,function (err,res) {
+                if(err){
+                    error(res);
+                    return;
+                }
+                Hydrate(function (err,res) {
+                    if(err){
+                        error(res);
+                        return;
+                    }
+                    connected[players.p1].leave('HALL');
+                    connected[players.p2].leave('HALL');
+                    connected[players.p1].join("players:"+user.game);
+                    connected[players.p2].join("players:"+user.game);
+                    Dispatcher.getUser(players.p1,function (err,user_fetch_1) {
+                        if(err){
+                            error(user_fetch_1);
+                            return;
+                        }
+                        Dispatcher.getUser(players.p2,function (err,user_fetch_2) {
+                            if(err){
+                                error(user_fetch_2);
+                                return;
+                            }
+                            io.to("players:"+user.game).emit("gameBegin",{p1:user_fetch_1.username,p2:user_fetch_2.username});
+                            sendLetter();
+                        });
+                    });
+                });
+            });
+        }
+
+        socket.on('playerKeypress',function (keycode) {
+            if(!user) return;
+            Hydrate(function (err,res) {
+                if(err){
+                    error(res);
+                    return;
+                }
+                if(!user.id) return;
+                if(parseInt(user.game) == 0) return;
+                if(!checkKeycode(keycode)) return
+                console.log(keycode);
+                playerKeypress(keycode);
+            });
+        });
+
+        function checkKeycode(keycode){
+            return ((keycode >= 65 && keycode <= 90) || (keycode >= 97 && keycode <= 122));
+        }
+
+        function playerKeypress(keycode){
+            Dispatcher.playerKeypressHandler(user.id,user.match,keycode,function (err,good_answer) {
+                if(err){
+                    error(good_answer);
+                    return;
+                }
+                Dispatcher.fetchLetterHistory(user.game, function (err,history) {
+                    //history : [{letter:'A',player:username,color:red/green},...]
+                    io.to("players:"+user.game).emit('majletterHistory',history);
+                    Dispatcher.fetchPoints(user.match,function (err,points) {
+                        //points {username:X,username:X}
+                        io.to("players:"+user.game).emit('majPoints',points);
+                        if(good_answer) sendLetter();
+                    });
+                });
+            });
+        }
+
+        function sendLetter() {
+            Hydrate(function (err,res) {
+                if(err){
+                    error(res);
+                    return;
+                }
+                Dispatcher.fetchActualLetter(user.game,function (err,letter) {
+                    if(err){
+                        error(letter);
+                        return;
+                    }
+                    io.to("players:"+user.game).emit('sendLetter',letter.char);
+                });
+            });
         }
 
     });
