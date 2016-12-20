@@ -145,6 +145,7 @@
     });
 
     socket.on('majLetterHistory',function (history) {
+        console.log(history);
         //history : [{user:{username:X},letter:X},...]
         $history.html(' ');
         history.forEach(function (letter) {

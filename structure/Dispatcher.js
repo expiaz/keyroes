@@ -210,12 +210,13 @@ function playerKeypress(user_id,game_id,keycode,fn){
 function fetchLetterHistory(game_id,fn){
     console.log("fetchLetterHistory");
     Controllers.Letter.fetchLetterHistory(game_id,function (err,letters) {
+        console.log(letters);
         if(err) return fn(true,letters);
         var ret = [];
         letters.forEach(function (letter) {
             Controllers.User.Model.Redis.getUser(letter.user,function (err,user) {
                 if(err) return fn(true,user);
-                ret.push({user:{username:user.username},letter:letter.char});
+                ret.push({user:{username:user.username},letter:letter.letter.char});
                 if(ret.length == letters.length) return fn(false,ret);
             })
         });

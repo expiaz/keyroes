@@ -20,6 +20,8 @@ function addLetterToHistory(game_id,letter_id,user_id,fn){
 
 function fetchLetterHistory(game_id,fn){
     LetterModelRedis.hgetallLetters(game_id,function (err,letters) {
+        console.log("letter controller letters")
+        console.log(letters);
         if(err) return fn(true,letters);
         var array_letters = [],
             ret_letter = [];
@@ -30,7 +32,7 @@ function fetchLetterHistory(game_id,fn){
         array_letters.forEach(function (lid) {
             LetterModelRedis.getLetter(lid,function (err,letter) {
                 var p = {
-                    user:letters[letter_id],
+                    user:letters[lid],
                     letter:letter
                 };
                 ret_letter.push(p);

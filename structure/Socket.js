@@ -30,7 +30,7 @@ function socketing(server){
         game_timer.start(game_time);
         game_timer.pause();
 
-        var user,
+        var user = {},
             connected = io.sockets.connected;
 
         function error(err){
@@ -212,7 +212,7 @@ function socketing(server){
         }
 
         socket.on('playerKeypress',function (keycode) {
-            if(!user) return;
+            if(!user.id) return;
             Hydrate(function (err,res) {
                 if(err) return error(res);
                 if(!user.id) return;
@@ -233,7 +233,7 @@ function socketing(server){
                 Dispatcher.fetchLetterHistory(user.game, function (err,history) {
                     console.log("after fetchLetterHistory");
                     //history : [{user:{username:X},letter:X},...]
-                    io.to("players:"+user.game).emit('majletterHistory',history);
+                    io.to("players:"+user.game).emit('majLetterHistory',history);
                     Dispatcher.getGamePoints(user.game,function (err,points) {
                         console.log("after getGamePoints");
                         //points {p1:{username:X,points:X},p2{username:X,points:X}}
