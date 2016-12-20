@@ -2,9 +2,11 @@ var Redis = require('./server');
 var LetterClass = require('./../../Letter');
 
 var Letter = {
+    genLetter: genLetter,
     addLetter:addLetter,
     getLetter:getLetter,
-    getLetters: getLetters,
+    hgetallLetters: hgetallLetters,
+    saddLetters: saddLetters
 }
 
 module.exports = Letter;
@@ -35,22 +37,23 @@ function genLetter(game_id,fn){
  */
 function addLetter(game_id,fn){
     genLetter(game_id, function (err,letter) {
-        if(err){
-            fn(true,"GenLetter failed");
-            return;
-        }
-        Redis.multi()
-            .hmset("letters:"+game_id,letter.id,0)
-            .hmset("letter:"+letter.id,letter)
-            .exec(function (err) {
-                if(err) throw(err);
-                fn(false,"Letter added");
-            });
+        if(err) return fn(true,"GenLetter failed");
+        Redis.hmset("letter:"+letter.id,letter,function (err,res) {
+            if(err) throw(err);
+            fn(false,letter.id);
+        })
     });
 
 }
 
-function getLetters(game_id,fn){
+function saddLetters(game_id,letter_id,user_id,fn){
+    Redis.hmset("letters:"+game_id,letter_id,user_id,function (err,res) {
+        if(err) throw(err);
+        fn(false,"Letter added to letters");
+    })
+}
+
+function hgetallLetters(game_id,fn){
     Redis.hgetall("letters:"+game_id,function (err,letters) {
         if(err) throw(err);
         fn(false,letters);

@@ -11,14 +11,12 @@ var Queue = {
 module.exports = Queue;
 
 function dropQueues(ids,fn){
-    var ack = false;
+    var stop = ids.length;
     ids.forEach(function (id) {
         QueueModelRedis.dropQueue(id,function (err,res) {
-            ack == ack && (err?true:false);
+            if(--stop == 0) return fn(false,"Done dropping users from queue")
         });
     });
-    if(ack) fn(true,"Fail dropping queues");
-    else fn(false,"Done dropping queues");
 }
 
 function triggerQueue(fn){

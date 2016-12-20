@@ -145,17 +145,17 @@
     });
 
     socket.on('majLetterHistory',function (history) {
-        //history : [{letter:'A',player:username,color:red/green},...]
+        //history : [{user:{username:X},letter:X},...]
         $history.html(' ');
         history.forEach(function (letter) {
-            $history.append('<div style="color:'+letter.color+'">'+letter.username+' : '+letter.letter+'</div>');
+            $history.append('<div style="color:green">'+letter.user.username+' : '+letter.letter+'</div>');
         });
     });
 
     socket.on('majPoints',function (points) {
-        //points {username:X,username:X}
-        for(var username in points){
-            $(".player-point-"+username).html(points[username]);
+        //points {p1:{username:X,points:X},p2:{username:X,points:X}}
+        for(var pn in points){
+            $(".player-point-"+points[pn].username).html(points[pn].points);
         }
     });
 

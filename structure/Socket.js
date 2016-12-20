@@ -214,14 +214,10 @@ function socketing(server){
         socket.on('playerKeypress',function (keycode) {
             if(!user) return;
             Hydrate(function (err,res) {
-                if(err){
-                    error(res);
-                    return;
-                }
+                if(err) return error(res);
                 if(!user.id) return;
                 if(parseInt(user.game) == 0) return;
-                if(!checkKeycode(keycode)) return
-                console.log(keycode);
+                if(!checkKeycode(keycode)) return;
                 playerKeypress(keycode);
             });
         });
@@ -231,16 +227,16 @@ function socketing(server){
         }
 
         function playerKeypress(keycode){
-            Dispatcher.playerKeypressHandler(user.id,user.match,keycode,function (err,good_answer) {
-                if(err){
-                    error(good_answer);
-                    return;
-                }
+            Dispatcher.playerKeypressHandler(user.id,user.game,keycode,function (err,good_answer) {
+                console.log("after playerKeypressHandler");
+                if(err) return error(good_answer);
                 Dispatcher.fetchLetterHistory(user.game, function (err,history) {
-                    //history : [{letter:'A',player:username,color:red/green},...]
+                    console.log("after fetchLetterHistory");
+                    //history : [{user:{username:X},letter:X},...]
                     io.to("players:"+user.game).emit('majletterHistory',history);
-                    Dispatcher.fetchPoints(user.match,function (err,points) {
-                        //points {username:X,username:X}
+                    Dispatcher.getGamePoints(user.game,function (err,points) {
+                        console.log("after getGamePoints");
+                        //points {p1:{username:X,points:X},p2{username:X,points:X}}
                         io.to("players:"+user.game).emit('majPoints',points);
                         if(good_answer) sendLetter();
                     });
@@ -254,7 +250,7 @@ function socketing(server){
                     error(res);
                     return;
                 }
-                Dispatcher.fetchActualLetter(user.game,function (err,letter) {
+                Dispatcher.getActualLetter(user.game,function (err,letter) {
                     if(err){
                         error(letter);
                         return;

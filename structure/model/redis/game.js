@@ -20,7 +20,7 @@ function isGame(id,fn){
 function addGame(game,fn){
     isGame(game.id,function (r) {
         if(r){
-            fn(true,"Game already exists");
+            fn(true,"addGame Game already exists");
             return;
         }
         Redis.multi()
@@ -34,23 +34,44 @@ function addGame(game,fn){
     });
 }
 
-function getGame(id,fn) {
+function getGame(id,props,fn) {
+    console.log("getGame "+id)
     isGame(id,function (r) {
         if(!r){
-            fn(true,"Game doesn't exists");
+            fn(true,"getGame Game doesn't exists");
             return;
         }
-        Redis.hgetall("game:"+id,function (err,game) {
-            if(err) throw(err);
-            fn(false,game);
-        });
+        if(props.length){
+            if(props.length == 1){
+                Redis.hget("game:"+id,props[0],function (err,res) {
+                    if(err) throw new Error(res);
+                    fn(false,res);
+                });
+            }
+            else{
+                var ret = [];
+                props.forEach(function (prop) {
+                    Redis.hget("game:"+id,prop,function (err,res) {
+                        if(err) throw new Error(res);
+                        ret.push(res);
+                        if(ret.length == props.length) fn(false,ret);
+                    })
+                })
+            }
+        }
+        else{
+            Redis.hgetall("game:"+id,function (err,game) {
+                if(err) throw(err);
+                fn(false,game);
+            });
+        }
     });
 }
 
 function delGame(id,fn) {
     isGame(id,function (r) {
         if(!r){
-            fn(true,"Game doesn't exists");
+            fn(true,"delGame Game doesn't exists");
             return;
         }
         Redis.del("game:"+id,function (err,res) {
@@ -63,10 +84,10 @@ function delGame(id,fn) {
 function setGame(id,props,fn) {
     isGame(id,function (r) {
         if(!r){
-            fn(true,"Game doesn't exists");
+            fn(true,"setGame Game doesn't exists");
             return;
         }
-        Redis.hmset("match:"+id,props,function(err,res){
+        Redis.hmset("game:"+id,props,function(err,res){
             if(err) throw(err);
             fn(false,res);
         });

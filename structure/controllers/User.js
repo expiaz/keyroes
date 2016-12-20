@@ -15,50 +15,41 @@ var User = {
 module.exports = User;
 
 function addUsers(ids,fn){
-    var ack = false;
+    var stop = ids.length;
     ids.forEach(function (id,i) {
         UserModelRedis.addUser(id,function (err,res) {
-            ack == ack && (err?true:false);
+            if(--stop == 0) return fn(false,"Done adding users");
         });
     });
-    if(ack) fn(true,"Fail adding users");
-    else fn(false,"Done adding users");
 }
 
 function getUsers(ids,fn){
-    var ack = false,
-        users = [];
+    var users = [];
 
     ids.forEach(function (id,i) {
         UserModelRedis.getUser(id,function (err,user) {
-            ack == ack && (err?true:false);
             users.push(user);
+            if(users.length == ids.length) return fn(false,users);
         });
     });
-    if(ack) fn(true,"Fail getting users");
-    else fn(false,users);
 }
 
 function setUsers(ids,props,fn){
-    var ack = false;
+    var stop = ids.length;
     ids.forEach(function (id,i) {
         UserModelRedis.setUser(id,props,function (err,res) {
-            ack == ack && (err?true:false);
+            if(--stop == 0) return fn(false,"Done setting users");
         });
     });
-    if(ack) fn(true,"Fail settings users");
-    else fn(false,"Done setting users");
 }
 
 function delUsers(ids,fn){
-    var ack = false;
+    var stop = ids.length;
     ids.forEach(function (id,i) {
         UserModelRedis.delUser(id,function (err,res) {
-            ack == ack && (err?true:false);
+            if(--stop == 0) return fn(false,"Done deleting users");
         });
     });
-    if(ack) fn(true,"Fail deleting users");
-    else fn(false,"Done deleting users");
 }
 
 

@@ -20,9 +20,9 @@ var Dispatcher = {
     gameFoundPlayerAnswerCheckAnswersHandler: gameFoundPlayerAnswerCheckAnswers,
     createGameHandler: createGame,
     playerKeypressHandler: playerKeypress,
-    fetchActualLetter: fetchActualLetter,
+    getActualLetter: Controllers.Game.getActualLetter,
     fetchLetterHistory: fetchLetterHistory,
-    fetchPoints: fetchPoints,
+    getGamePoints: getGamePoints,
 
     getMatch: Controllers.Match.Model.Redis.getMatch,
     getUser: Controllers.User.Model.Redis.getUser,
@@ -108,15 +108,9 @@ function gameFoundPlayerAnswer(player_id,answer,fn){
 function gameFoundPlayerAnswerCheckAnswers(player_id,fn){
     //getMatch
     Controllers.User.Model.Redis.getUser(player_id,function (err,fetch_user) {
-        if(err){
-            fn(true,fetch_user);
-            return;
-        }
+        if(err) return fn(true,fetch_user);
         Controllers.Match.Model.Redis.getMatch(fetch_user.match,function (err,fetch_match) {
-            if(err){
-                fn(true,fetch_match);
-                return;
-            }
+            if(err) return fn(true,fetch_match);
             var props,
                 acceptance = parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer);
             if(acceptance) props = {
@@ -131,15 +125,9 @@ function gameFoundPlayerAnswerCheckAnswers(player_id,fn){
                 };
 
             Controllers.User.setUsers([fetch_match.p1,fetch_match.p2],props,function (err,rep) {
-                if(err){
-                    fn(true,rep);
-                    return;
-                }
+                if(err) return fn(true,rep);
                 Controllers.Match.Model.Redis.delMatch(fetch_match.id,function(err,rep){
-                    if(err){
-                        fn(true,rep);
-                        return;
-                    }
+                    if(err) return fn(true,rep);
                     fn(false,{p1:fetch_match.p1,p2:fetch_match.p2},acceptance);
                 });
             });
@@ -150,34 +138,15 @@ function gameFoundPlayerAnswerCheckAnswers(player_id,fn){
 
 function createGame(players,fn) {
     Controllers.User.getUsers([players.p1,players.p2], function(err,users){
-        if(err){
-            fn(true,"Pb retieving the users (createMatch)");
-            return;
-        }
-        var ack = false;
-        users.forEach(function (user) {
-            if(!(parseInt(user.game) == 0)){
-                ack = true;
-                return;
-            }
-        });
-        if(ack){
-            fn(false,"User already in a game");
-            return;
-        }
+        if(err) return fn(true,users);
+        if(parseInt(users[0].game) != 0 && parseInt(users[1].game) != 0) return fn(true,"User already in a game");
         var game = new Game(players.p1+""+players.p2,players.p1,players.p2);
         Controllers.Game.Model.Redis.addGame(game,function (err,res) {
-            if(err){
-                fn(true,"Error adding the game");
-                return;
-            }
-            Controllers.User.setUsers([players.p1,players.p2],{game:game.id,state:"IN_GAME"},function(err,rep){
-                if(err) fn(true,rep);
-                else pushLetterInGame(game.id,function (err,res) {
-                    if(err){
-                        fn(true,"Error pushing letter to game");
-                        return;
-                    }
+            if(err) return fn(true,res);
+            Controllers.Game.addLetterToGame(game.id,function (err,res) {
+                if(err) return fn(true,res);
+                Controllers.User.setUsers([players.p1,players.p2],{game:game.id,state:"IN_GAME"},function(err,rep){
+                    if(err) return fn(true,rep);
                     fn(false,"Game created and ready");
                 });
             });
@@ -185,165 +154,104 @@ function createGame(players,fn) {
     });
 }
 
-function fetchActualLetter(game_id,fn){
-    console.log("a");
-    Controllers.Letter.Model.Redis.getLetters(game_id,function (err,letters) {
-        console.log("b");
-        if(err){
-            fn(true,letters);
-            return;
-        }
-        var ack = false,
-            ack_letter = {};
-        for(var letter_id in letters){
-            console.log("c");
-            if(parseInt(letters[letter_id]) == 0){
-
-                console.log("d");
-                Controllers.Letter.Model.Redis.getLetter(letter_id,function (err,letter) {
-                    console.log("e");
-                    if(err){
-                        ack = true;
-                        return;
-                    }
-                    ack_letter = letter;
-                });
-                console.log("f");
-                break;
-            }
-            console.log("g");
-        }
-        console.log("h");
-        if(ack) fn(true,"Problem fetching actual letter");
-        else fn(false,ack_letter);
-    })
-}
-
 function playerKeypress(user_id,game_id,keycode,fn){
-    console.log("playerKeypressfef "+keycode);
-    fetchActualLetter(game_id,function (err,letter) {
-        console.log("gzrgsgr");
-        if(err){
-            fn(true,letter);
-            return;
-        }
-        Controllers.Game.Model.Redis.getGame(game_id,function (err,game) {
-            console.log(letter.code+" = "+keycode);
-            if(err){
-                fn(true,game);
-                return;
-            }
-            if(letter.code == keycode){
-                console.log("good");
-                var props;
-                if(user_id == game.p1) props = {
-                    p1_score: game.p1_score + 1
-                }
-                else props = {
-                    p2_score: game.p2_score + 1
-                }
-                pushLetterInGame(game_id,function (err,res) {
-                    if(err){
-                        fn(true,res);
-                        return;
-                    }
-                    Controllers.Game.Model.setGame(game_id,props,function (err,res) {
-                        if(err) fn(true,res);
-                        else fn(false,true);
-                    });
-                });
-            }
-            else {
-                var props;
+    console.log("playerKeypress");
+    Controllers.Game.getActualLetter(game_id,function (err,actual_letter) {
+        if(err) return fn(true,actual_letter);
+        Controllers.Game.Model.Redis.getGame(game_id,[],function(err,game) {
+            if(err) return fn(true,game);
+            var props,
+                isGoodAnswer;
+            if(actual_letter.code == keycode){
+                isGoodAnswer = true;
                 if(user_id == game.p1){
-
-                    props = {
-                        p1_score: game.p1_score > 0 ? game.p1_score - 1 : 0
+                    props= {
+                        p1_score: parseInt(game.p1_score) + 1
                     }
                 }
-                else {
-                    props = {
-                        p2_score: game.p2_score > 0 ? game.p2_score - 1 : 0
+                else{
+                    props= {
+                        p2_score: parseInt(game.p2_score) + 1
                     }
                 }
-                Controllers.Game.Model.setGame(game_id,props,function (err,res) {
-                    if(err) fn(true,res);
-                    else fn(false,false);
-                });
             }
+            else{
+                isGoodAnswer = false;
+                if(user_id == game.p1){
+                    props= {
+                        p1_score: parseInt(game.p1_score) > 0 ? parseInt(game.p1_score) - 1 : 0
+                    }
+                }
+                else{
+                    props= {
+                        p2_score: parseInt(game.p2_score) > 0 ? parseInt(game.p2_score) - 1 : 0
+                    }
+                }
+            }
+            Controllers.Game.Model.Redis.setGame(game_id,props,function (err,res) {
+                if(err) return fn(true,res);
+                if(isGoodAnswer){
+                    Controllers.Letter.addLetterToHistory(game_id,actual_letter.id,user_id,function (err,res) {
+                        if(err) return fn(true,res);
+                        Controllers.Game.addLetterToGame(game_id,function (err,res) {
+                            if(err) return fn(true,res);
+                            fn(false,true);
+                        });
+                    });
+                }
+                else{
+                    fn(false,false);
+                }
+            });
         });
     });
 }
-
-function getMatchOf(user_id,fn){
-    Controllers.User.Model.Redis.getUser(user_id,function (err,user) {
-        if(err){
-            fn(true,user);
-            return;
-        }
-        Controllers.Game.Model.Redis.getGame(user.game,function (err,game) {
-            if(err) fn(true,game);
-            else fn(false,game);
-        });
-    });
-}
-
-function pushLetterInGame(game_id,fn){
-    Controllers.Letter.Model.Redis.addLetter(game_id,function (err,res) {
-        if(err){
-            fn(true,res);
-            return;
-        }
-        fn(false,"Letter pushed");
-    });
-}
-
-
 
 function fetchLetterHistory(game_id,fn){
-    Controllers.Letter.Model.Redis.getLetters(game_id,function (err,letters) {
-        if(err){
-            fn(true,letters);
-            return;
-        }
-        var history = [],
-            ack = false;
-        for(var letter_id in letters){
-            if(parseInt(letters[letter_id]) != 0){
-                Controllers.Letter.Model.Redis.getLetter(letter_id,function (err,letter) {
-                    if(err){
-                        ack = true;
-                        return;
-                    }
-                    history.push({
-                       letter:letter.char,
-                       player:letters[letter.id],
-                       color:'green'
-                    });
-                });
-            }
-        }
-        if(ack) fn(false,"Problem generating history");
-        else fn(false,history);
+    console.log("fetchLetterHistory");
+    Controllers.Letter.fetchLetterHistory(game_id,function (err,letters) {
+        if(err) return fn(true,letters);
+        var ret = [];
+        letters.forEach(function (letter) {
+            Controllers.User.Model.Redis.getUser(letter.user,function (err,user) {
+                if(err) return fn(true,user);
+                ret.push({user:{username:user.username},letter:letter.char});
+                if(ret.length == letters.length) return fn(false,ret);
+            })
+        });
     });
 }
 
-function fetchPoints(game_id,fn){
-    Controllers.Game.Model.Redis.getGame(game_id,function (err,game) {
-        if(err){
-            fn(true,game);
-            return;
-        }
-        var points = {};
-        Controllers.User.getUsers([game.p1,game.p2],function (err,users) {
-            if(err){
-                fn(true,users);
-                return;
+function getGamePoints(game_id,fn){
+    console.log("getGamePoints")
+    Controllers.Game.Model.Redis.getGame(game_id,[],function (err,game) {
+        if(err) return fn(true,game);
+        var points = {
+            p1:{
+                username:null,
+                points:null,
+            },
+            p2:{
+                username:null,
+                points:null,
             }
-            users.forEach(function (user) {
-                if(game.p1 == user.id) points[user.username] = game.p1_score;
-                else points[user.username] = game.p2_score;
-            });
+        };
+        Controllers.User.getUsers([game.p1,game.p2],function (err,users) {
+            if(err) return fn(true,users);
+            switch(users[0].id){
+                case game.p1:
+                    points.p1.username = users[0].username;
+                    points.p1.points = game.p1_score;
+                    points.p2.username = users[1].username;
+                    points.p2.points = game.p2_score;
+                    break;
+                case game.p2:
+                    points.p1.username = users[1].username;
+                    points.p1.points = game.p1_score;
+                    points.p2.username = users[0].username;
+                    points.p2.points = game.p2_score;
+                    break;
+            }
             fn(false,points);
         });
 
