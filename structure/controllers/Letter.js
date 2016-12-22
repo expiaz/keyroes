@@ -1,5 +1,4 @@
 var LetterModelRedis = require('./../model/redis/letter');
-var GameModelRedis = require('./../model/redis/game');
 
 var Letter = {
     Model:{
@@ -15,13 +14,11 @@ function addLetterToHistory(game_id,letter_id,user_id,fn){
     LetterModelRedis.saddLetters(game_id,letter_id,user_id,function (err,res) {
         if(err) return fn(true,res);
         fn(false,res);
-    })
+    });
 }
 
 function fetchLetterHistory(game_id,fn){
     LetterModelRedis.hgetallLetters(game_id,function (err,letters) {
-        console.log("letter controller letters")
-        console.log(letters);
         if(err) return fn(true,letters);
         var array_letters = [],
             ret_letter = [];
@@ -31,13 +28,14 @@ function fetchLetterHistory(game_id,fn){
         }
         array_letters.forEach(function (lid) {
             LetterModelRedis.getLetter(lid,function (err,letter) {
+                if(err) return fn(true,letter);
                 var p = {
                     user:letters[lid],
                     letter:letter
                 };
                 ret_letter.push(p);
                 if(ret_letter.length == array_letters.length) return fn(false,ret_letter);
-            })
+            });
         });
     });
 }

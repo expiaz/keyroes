@@ -10,7 +10,7 @@ client.on('connect', function() {
 });
 
 client.flushdb(function(err,rep){
-    if(err) throw(err);
+    if(err) throw new Error(err);
     console.log('[REDIS:FLUSHDB] '+rep);
 });
 

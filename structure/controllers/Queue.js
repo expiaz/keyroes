@@ -14,29 +14,22 @@ function dropQueues(ids,fn){
     var stop = ids.length;
     ids.forEach(function (id) {
         QueueModelRedis.dropQueue(id,function (err,res) {
-            if(--stop == 0) return fn(false,"Done dropping users from queue")
+            if(err) return fn(true,res);
+            if(--stop == 0) return fn(false);
         });
     });
 }
 
 function triggerQueue(fn){
     QueueModelRedis.getQueue(function(err,users){
-        if(err){
-            fn(true,"Can't get the queue");
-            return;
-        }
+        if(err) return fn(true,users);
         if(users.length >= 2 && users.length%2 == 0){
             var p1 = users[0],
                 p2 = users[1];
-
             dropQueues([p1,p2],function (err,res) {
-                if(err){
-                    fn(true,res);
-                    return;
-                }
-                fn(false,"Done triggering queue : created",true,{p1:p1,p2:p2});
+                return fn(false,null,true,{p1:p1,p2:p2});
             });
         }
-        else fn(false,"Done triggering queue : aborted",false);
+        else return fn(false,null,false);
     });
 }
