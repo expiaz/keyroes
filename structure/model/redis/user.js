@@ -33,9 +33,9 @@ function addUser(user,fn){
 function getUser(id,fn){
     isRegistered(id,function(r){
         if(!r) return fn(true,"[Model:user:getUser] User doesn't exists");
-        Redis.hgetall("user:"+id, function (err, res){
+        Redis.hgetall("user:"+id, function (err,fetch_user){
             if(err) throw new Error(err);
-            fn(false);
+            fn(false,fetch_user);
         });
     });
 }

@@ -40,13 +40,14 @@ function socketing(server){
 
         function Hydrate(fn){
             Dispatcher.getUser(socket.id,function (err,fetch_user) {
+                console.log(fetch_user);
                 if(err){
                     error(fetch_user);
                     user = {};
                     return fn({});
                 }
-                user = fetch_user.id ? fetch_user : {};
-                return fn(fetch_user.id ? fetch_user : {});
+                user = fetch_user ? fetch_user : {};
+                return fn(fetch_user ? fetch_user : {});
             });
         }
 
@@ -54,11 +55,12 @@ function socketing(server){
             Dispatcher.registerHandler(socket.id,username,function(e,r){
                 if(e){
                     error(r);
-                    return fn(false);
+                    return fn ? fn(false) : '';
                 }
                 Hydrate(function (datas) {
+                    console.log("hydrate");
                     socket.join('HALL');
-                    return fn(true);
+                    return fn ? fn(true) : '';
                 });
             });
         });
@@ -69,9 +71,9 @@ function socketing(server){
                 Dispatcher.addQueueHandler(socket.id, function(err, res){
                     if(err){
                         error(res);
-                        return fn(false);
+                        return fn ? fn(false) : '';
                     }
-                    fn(true);
+                    fn ? fn(true) : '';
                     triggerQueue();
                 });
             });
@@ -150,6 +152,7 @@ function socketing(server){
         }
 
         socket.on('playerKeypress',function (keycode) {
+            if(!user.id) return;
             Hydrate(function(datas){
                 if(!datas.id) return;
                 if(parseInt(datas.game) == 0) return;
