@@ -23,6 +23,7 @@ var Dispatcher = {
     getActualLetter: Controllers.Game.getActualLetter,
     fetchLetterHistory: fetchLetterHistory,
     getGamePoints: getGamePoints,
+    fetchLetterTypeHistory:fetchLetterTypeHistory,
 
     getMatch: Controllers.Match.Model.Redis.getMatch,
     getUser: Controllers.User.Model.Redis.getUser,
@@ -125,7 +126,7 @@ function playerKeypress(user_id,game_id,keycode,fn){
             var props,
                 isGoodAnswer;
             if(actual_letter.code == keycode){
-                isGoodAnswer = true;
+                isGoodAnswer = 1;
                 if(user_id == game.p1){
                     props= {
                         p1_score: parseInt(game.p1_score) + 1
@@ -138,7 +139,7 @@ function playerKeypress(user_id,game_id,keycode,fn){
                 }
             }
             else{
-                isGoodAnswer = false;
+                isGoodAnswer = 0;
                 if(user_id == game.p1){
                     props= {
                         p1_score: parseInt(game.p1_score) > 0 ? parseInt(game.p1_score) - 1 : 0
@@ -152,18 +153,21 @@ function playerKeypress(user_id,game_id,keycode,fn){
             }
             Controllers.Game.Model.Redis.setGame(game_id,props,function (err,res) {
                 if(err) return fn(true,res);
-                if(isGoodAnswer){
-                    Controllers.Letter.addLetterToHistory(game_id,actual_letter.id,user_id,function (err,res) {
-                        if(err) return fn(true,res);
-                        Controllers.Game.addLetterToGame(game_id,function (err,res) {
+                Controllers.Letter.addLetterToTypeHistory(game_id,user_id,keycode,isGoodAnswer,function (err,res) {
+                    if(err) return fn(true,res);
+                    if(isGoodAnswer){
+                        Controllers.Letter.addLetterToHistory(game_id,actual_letter.id,user_id,function (err,res) {
                             if(err) return fn(true,res);
-                            fn(false,true);
+                            Controllers.Game.addLetterToGame(game_id,function (err,res) {
+                                if(err) return fn(true,res);
+                                fn(false,true);
+                            });
                         });
-                    });
-                }
-                else{
-                    fn(false,false);
-                }
+                    }
+                    else{
+                        fn(false,false);
+                    }
+                });
             });
         });
     });
@@ -177,6 +181,25 @@ function fetchLetterHistory(game_id,fn){
             Controllers.User.Model.Redis.getUser(letter.user,function (err,user) {
                 if(err) return fn(true,user);
                 ret.push({user:{username:user.username},letter:letter.letter.char});
+                if(ret.length == letters.length) return fn(false,ret);
+            });
+        });
+    });
+}
+
+function fetchLetterTypeHistory(game_id,fn){
+    console.log("fetchLetterTypeHistory");
+    Controllers.Letter.fetchLetterTypeHistory(game_id,function (err,letters) {
+        if(err) return fn(true,letters);
+        var ret = [];
+        letters.forEach(function (letter) {
+            Controllers.User.Model.Redis.getUser(letter.user,function (err,user) {
+                if(err) return fn(true,user);
+                ret.push({
+                    user:{username:user.username},
+                    letter:String.fromCharCode(letter.letter),
+                    color: letter.answer ? 'green' : 'red'
+                });
                 if(ret.length == letters.length) return fn(false,ret);
             });
         });

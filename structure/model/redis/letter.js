@@ -6,7 +6,9 @@ var Letter = {
     addLetter:addLetter,
     getLetter:getLetter,
     hgetallLetters: hgetallLetters,
-    saddLetters: saddLetters
+    saddLetters: saddLetters,
+    lpushLettersTypeHistory: lpushLettersTypeHistory,
+    lrangeLettersTypeHistory: lrangeLettersTypeHistory
 }
 
 module.exports = Letter;
@@ -49,7 +51,7 @@ function saddLetters(game_id,letter_id,user_id,fn){
     Redis.hmset("letters:"+game_id,letter_id,user_id,function (err,res) {
         if(err) throw new Error(err);
         fn(false);
-    })
+    });
 }
 
 function hgetallLetters(game_id,fn){
@@ -63,5 +65,19 @@ function getLetter(lid,fn){
     Redis.hgetall("letter:"+lid,function (err,letter) {
         if(err) throw new Error(err);
         fn(false,letter);
+    });
+}
+
+function lpushLettersTypeHistory(game_id,user_id,letter_keycode,GoodAnswer,fn){
+    Redis.lpush("typeHistory:"+game_id,user_id+"::"+letter_keycode+"::"+GoodAnswer,function (err,res) {
+        if(err) throw new Error(err);
+        fn(false);
+    });
+}
+
+function lrangeLettersTypeHistory(game_id,fn){
+    Redis.lrange("typeHistory:"+game_id,0,-1,function (err,history) {
+        if(err) throw new Error(err);
+        fn(false,history);
     });
 }

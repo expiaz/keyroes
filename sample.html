@@ -3,22 +3,19 @@
 <head>
     <meta charset="utf-8">
     <title>Titre de la page</title>
+    <style>
+        @font-face {
+            font-family: 'keyfont';
+            src: url('public/keyfont.ttf');
+            font-weight: normal;
+            font-style: normal;
+        }
+        body{
+            font-family:keyfont;
+        }
+    </style>
 </head>
 <body>
-<div class="item"></div>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    var socket = io();
-
-    var container = document.getElementsByClassName('item')[0];
-
-    socket.on('connect', function () {
-        container.innerHTML = "connected";
-    });
-
-    socket.on('yo', function () {
-        container.innerHTML = "yo";
-    });
-</script>
+abcdefghijklmopqrst
 </body>
 </html>

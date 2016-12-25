@@ -5,7 +5,9 @@ var Letter = {
         Redis: LetterModelRedis
     },
     fetchLetterHistory: fetchLetterHistory,
-    addLetterToHistory:addLetterToHistory
+    addLetterToHistory:addLetterToHistory,
+    fetchLetterTypeHistory:fetchLetterTypeHistory,
+    addLetterToTypeHistory:addLetterToTypeHistory
 }
 
 module.exports = Letter;
@@ -34,8 +36,32 @@ function fetchLetterHistory(game_id,fn){
                     letter:letter
                 };
                 ret_letter.push(p);
-                if(ret_letter.length == array_letters.length) return fn(false,ret_letter);
+                if(ret_letter.length == array_letters.length) return fn(false,ret_letter.reverse());
             });
+        });
+    });
+}
+
+function addLetterToTypeHistory(game_id,user_id,letter_keycode,goodanswer,fn){
+    LetterModelRedis.lpushLettersTypeHistory(game_id,user_id,letter_keycode,goodanswer,function (err,res) {
+        if(err) return fn(true,res);
+        fn(false,res);
+    });
+}
+
+function fetchLetterTypeHistory(game_id,fn){
+    LetterModelRedis.lrangeLettersTypeHistory(game_id,function (err,letters) {
+        if(err) return fn(true,letters);
+        console.log(letters);
+        var ret = [];
+        letters.forEach(function (l) {
+            var indexs = l.split("::");
+            ret.push({
+                user:indexs[0],
+                letter:indexs[1],
+                answer:parseInt(indexs[2]) ? true : false
+            });
+            if(letters.length == ret.length) return fn(false,ret);
         });
     });
 }

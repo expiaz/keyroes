@@ -89,6 +89,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'keyfont';
+    src: url('../keyfont.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body{
     margin:0;
     padding:0;
@@ -102,3 +109,4 @@ body{
     content:" ";
     clear: both;
 }
+
