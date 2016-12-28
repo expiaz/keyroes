@@ -24,6 +24,7 @@ var Dispatcher = {
     fetchLetterHistory: fetchLetterHistory,
     getGamePoints: getGamePoints,
     fetchLetterTypeHistory:fetchLetterTypeHistory,
+    DisconnectHandler:DisconnectHandler,
 
     getMatch: Controllers.Match.Model.Redis.getMatch,
     getUser: Controllers.User.Model.Redis.getUser,
@@ -74,8 +75,10 @@ function opponentFoundPlayerAnswer(player_id,answer,fn){
 function opponentFoundPlayerAnswerCheckAnswers(player_id,fn){
     Controllers.User.Model.Redis.getUser(player_id,function (err,fetch_user) {
         if(err) return fn(true,fetch_user);
+        if(!fetch_user.match) return;
         Controllers.Match.Model.Redis.getMatch(fetch_user.match,function (err,fetch_match) {
             if(err) return fn(true,fetch_match);
+            if(!fetch_match) return;
             var props,
                 acceptance = parseInt(fetch_match.p1_answer) && parseInt(fetch_match.p2_answer);
             if(acceptance) props = {
@@ -180,7 +183,7 @@ function fetchLetterHistory(game_id,fn){
         letters.forEach(function (letter) {
             Controllers.User.Model.Redis.getUser(letter.user,function (err,user) {
                 if(err) return fn(true,user);
-                ret.push({user:{username:user.username},letter:letter.letter.char});
+                ret.push({user:{username:user.username},letter:letter.letter});
                 if(ret.length == letters.length) return fn(false,ret);
             });
         });
@@ -188,7 +191,6 @@ function fetchLetterHistory(game_id,fn){
 }
 
 function fetchLetterTypeHistory(game_id,fn){
-    console.log("fetchLetterTypeHistory");
     Controllers.Letter.fetchLetterTypeHistory(game_id,function (err,letters) {
         if(err) return fn(true,letters);
         var ret = [];
@@ -237,5 +239,54 @@ function getGamePoints(game_id,fn){
             }
             fn(false,points);
         });
+    });
+}
+
+function DisconnectHandler(user_id,fn){
+    Controllers.User.Model.Redis.getUser(user_id,function (err,user) {
+        if(err) return fn(true,user);
+        switch(user.state){
+            case 'HALL':
+                break;
+            case 'QUEUE':
+                Controllers.Queue.Model.Redis.dropQueue(user.id,function (err,res) {
+                    if(err) return fn(true,res);
+                    Controllers.User.Model.Redis.delUser(user.id,function () {
+                        fn(false,"QUEUE");
+                    });
+                });
+                break;
+            case 'MATCHED':
+                Controllers.Match.Model.Redis.getMatch(user.match,function (err,match) {
+                    if(err) return fn(true,match);
+                    var opp = user.id == match.p1 ? match.p2 : match.p1;
+                    Controllers.User.Model.Redis.setUser(opp,{state:'HALL',match:0,answertomatch:-1},function (err,res) {
+                        if(err) return fn(true,res);
+                        Controllers.Match.Model.Redis.delMatch(user.match,function (err,res) {
+                            if(err) return fn(true,res);
+                            Controllers.User.Model.Redis.delUser(user.id,function () {
+                                fn(false,"MATCHED",user.match,user.id,opp);
+                            });
+                        });
+                    });
+                });
+                break;
+            case 'IN_GAME':
+                Controllers.Game.Model.Redis.getGame(user.game,[],function (err,game) {
+                    if(err) return fn(true,game);
+                    var opp = user.id == game.p1 ? game.p2 : game.p1;
+                    Controllers.User.Model.Redis.setUser(opp,{state:'HALL',game:0},function (err,res) {
+                        if(err) return fn(true,res);
+                        Controllers.Game.Model.Redis.delGame(user.game,function (err,res) {
+                            if(err) return fn(true,res);
+                            Controllers.User.Model.Redis.delUser(user.id,function () {
+                                fn(false,"IN_GAME",user.game,user.id,opp);
+                            });
+                        });
+                    });
+                });
+                break;
+        }
+
     });
 }

@@ -81,6 +81,7 @@ function socketing(server){
         function triggerQueue(){
             Dispatcher.triggerQueueHandler(function(err,res,matched,players) {
                 if(err) return error(res);
+                if(!players) return;
                 if(matched) opponentFoundcreateMatch(players);
             });
         }
@@ -102,6 +103,7 @@ function socketing(server){
             Hydrate(function(datas){
                 Dispatcher.getMatch(datas.match,function (err,fetch_match) {
                     if(err) return error(fetch_match);
+                    if(!fetch_match) return;
                     var time = (millis/1000).toFixed(1);
                     matchmaking_angle += matchmaking_incrementAngle;
                     io.to("match:"+fetch_match.p1+""+fetch_match.p2).emit('gameFoundTick',{angle:matchmaking_angle,time:time});
@@ -123,6 +125,7 @@ function socketing(server){
         function opponentFoundAnswerCheckAnswers(){
             Dispatcher.opponentFoundPlayerAnswerCheckAnswersHandler(socket.id,function (err,players,isMatchCreated) {
                 if(err) return error(players);
+                if(!players) return;
                 var created = isMatchCreated ? 'gameFoundAccepted' : 'gameFoundDeclined';
                 io.to("match:"+players.p1+""+players.p2).emit(created);
                 if(isMatchCreated) createGame(players);
@@ -141,8 +144,10 @@ function socketing(server){
                     connected[players.p2].join("players:"+datas.game);
                     Dispatcher.getUser(players.p1,function (err,user_fetch_1) {
                         if(err) return error(user_fetch_1);
+                        if(!user_fetch_1) return;
                         Dispatcher.getUser(players.p2,function (err,user_fetch_2) {
                             if(err) return error(user_fetch_2);
+                            if(!user_fetch_2) return;
                             io.to("players:"+datas.game).emit("gameBegin",{p1:user_fetch_1.username,p2:user_fetch_2.username});
                             sendLetter();
                         });
@@ -171,21 +176,23 @@ function socketing(server){
                     if(err) return error(good_answer);
                     Dispatcher.fetchLetterTypeHistory(datas.game, function (err,typehistory) {
                         if(err) return error(typehistory);
+                        if(!typehistory) return;
                         //history : [{user:{username:X},letter:X},...]
                         io.to("players:"+datas.game).emit('majLetterTypeHistory',typehistory);
                         Dispatcher.getGamePoints(datas.game,function (err,points) {
                             if(err) return error(points);
+                            if(!points) return;
                             //points {p1:{username:X,points:X},p2{username:X,points:X}}
                             io.to("players:"+datas.game).emit('majPoints',points);
-                            if(good_answer)
+                            if(good_answer){
                                 Dispatcher.fetchLetterHistory(datas.game,function (err,history) {
-                                    console.log("a");
-                                    console.log(typehistory)
                                     if(err) return error(history);
+                                    if(!history) return;
                                     //typehistory : [{user:{username:str},letter:str,answer:bool,color:str},...]
                                     io.to("players:"+datas.game).emit('majLetterHistory',history);
                                     sendLetter();
                                 });
+                            }
                         });
                     });
                 });
@@ -200,6 +207,46 @@ function socketing(server){
                 });
             });
         }
+
+        socket.on('stopTimer',function (state) {
+            console.log("stop_timer "+socket.id);
+            Dispatcher.getUser(socket.id,function (err,user) {
+                if(err) return error(user);
+                switch(state){
+                    case 'MATCHED':
+                        if(parseInt(user.match) == 0) break;
+                        matchmaking_timer.stop();
+                        break;
+                    case 'IN_GAME':
+                        if(parseInt(user.game) == 0) break;
+                        game_timer.stop();
+                        break;
+                }
+            });
+        });
+
+        socket.on('disconnect',function () {
+            console.log("disconnect "+socket.id);
+            Dispatcher.DisconnectHandler(socket.id,function (err,state,room,me,opp) {
+                if(err) return error(state);
+                switch(state){
+                    case 'HALL':
+                        break;
+                    case 'QUEUE':
+                        break;
+                    case 'MATCHED':
+                        io.to("match:"+room).emit('disconnection','MATCHED');
+                        connected[opp].leave("match:"+room);
+                        matchmaking_timer.stop();
+                        break;
+                    case 'IN_GAME':
+                        io.to("players:"+room).emit('disconnection','IN_GAME');
+                        connected[opp].leave("players:"+room);
+                        game_timer.stop();
+                        break;
+                }
+            });
+        });
 
     });
 

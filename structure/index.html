@@ -20,6 +20,12 @@
         font-family:keyfont;
         font-size:30px;
     }
+    #history, #typehistory{
+        float: left;
+        overflow-y: scroll;
+        height: 300px;
+        width: 150px;
+    }
 </style>
 <body>
 <div class="item"></div>
@@ -35,8 +41,8 @@
     <button class="match-controllers-accept" style="display: none;">accept</button>
     <button class="match-controllers-decline" style="display: none;">decline</button>
 </div>
-<div id="history"></div>
-<div id="typehistory"></div>
+<div id="history" style="display: none"></div>
+<div id="typehistory" style="display: none"></div>
 <script src="/socket.io/socket.io.js" type="text/javascript"></script>
 <script src="https://code.jquery.com/jquery-3.1.1.min.js" type="text/javascript"></script>
 <script src="/vendor/jquery-circle-progress/dist/circle-progress.js" type="text/javascript"></script>
@@ -124,6 +130,8 @@
     });
 
     socket.on('gameBegin',function (players) {
+        $typehistory.show();
+        $history.show();
         $players.show();
         $players.html(' ');
         for(var prop in players){
@@ -155,7 +163,7 @@
         //history : [{user:{username:X},letter:X},...]
         $history.html(' ');
         history.forEach(function (letter) {
-            $history.append('<div style="color:green">'+letter.user.username+' : '+letter.letter+'</div>');
+            $history.append('<div>'+letter.user.username+' : <span class="keyfont">'+letter.letter+'</span></div>');
         });
     });
 
@@ -173,6 +181,11 @@
         Typehistory.forEach(function (letter) {
             $typehistory.append('<div style="color:'+letter.color+'"><span class="keyfont">'+letter.letter+'</span> '+letter.user.username+'</div>');
         });
+    });
+
+    socket.on('disconnection',function (state) {
+        container.html('DC : '+state);
+        if(state == 'IN_GAME' || state == 'MATCHED') socket.emit('stopTimer',state);
     });
 
 </script>

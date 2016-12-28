@@ -4,11 +4,14 @@ var LetterClass = require('./../../Letter');
 var Letter = {
     genLetter: genLetter,
     addLetter:addLetter,
+    delLetter:delLetter,
     getLetter:getLetter,
-    hgetallLetters: hgetallLetters,
-    saddLetters: saddLetters,
+    lpushLetters: lpushLetters,
+    lrangeLetters: lrangeLetters,
+    delLetters:delLetters,
     lpushLettersTypeHistory: lpushLettersTypeHistory,
-    lrangeLettersTypeHistory: lrangeLettersTypeHistory
+    lrangeLettersTypeHistory: lrangeLettersTypeHistory,
+    delLettersTypeHistory:delLettersTypeHistory
 }
 
 module.exports = Letter;
@@ -47,24 +50,41 @@ function addLetter(game_id,fn){
     });
 }
 
-function saddLetters(game_id,letter_id,user_id,fn){
-    Redis.hmset("letters:"+game_id,letter_id,user_id,function (err,res) {
+function getLetter(lid,fn){
+    Redis.hgetall("letter:"+lid,function (err,letter) {
+        if(err) throw new Error(err);
+        fn(false,letter);
+    });
+}
+
+function delLetter(id,fn){
+    Redis.del("letter:"+id,function (err,res) {
         if(err) throw new Error(err);
         fn(false);
     });
 }
 
-function hgetallLetters(game_id,fn){
-    Redis.hgetall("letters:"+game_id,function (err,letters) {
+function lpushLetters(game_id,letter_id,user_id,fn){
+    Redis.lpush("letters:"+game_id,user_id+"::"+letter_id,function (err,res) {
+        if(err) throw new Error(err);
+        fn(false);
+    });
+}
+
+function lrangeLetters(game_id,fn){
+    Redis.lrange("letters:"+game_id,0,-1,function (err,letters) {
         if(err) throw new Error(err);
         fn(false,letters);
     });
 }
 
-function getLetter(lid,fn){
-    Redis.hgetall("letter:"+lid,function (err,letter) {
+function delLetters(game_id,fn){
+    Redis.del("count_letters:"+game_id,function (err,res) {
         if(err) throw new Error(err);
-        fn(false,letter);
+        Redis.del("letters:"+game_id,function (err,res) {
+            if(err) throw new Error(err);
+            fn(false);
+        });
     });
 }
 
@@ -81,3 +101,11 @@ function lrangeLettersTypeHistory(game_id,fn){
         fn(false,history);
     });
 }
+
+function delLettersTypeHistory(game_id,fn){
+    Redis.del("typeHistory:"+game_id,function (err,res) {
+        if(err) throw new Error(err);
+        fn(false);
+    });
+}
+
