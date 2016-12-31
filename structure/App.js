@@ -1,14 +1,16 @@
 'use strict';
-var io = require('./io');
+var io = require('./Io');
 var connected = io.sockets.connected;
+
 
 class Dispatcher{
     constructor(){
 
     }
 
-    messageSentHandler(sid,msg){
-        connected[sid].emit('message',msg);
+    register(user){
+        if(UserController.register(user))
+            connected[user.sid].emit('registering',true);
     }
 }
 

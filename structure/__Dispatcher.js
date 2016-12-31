@@ -1,7 +1,7 @@
-var User = require('./User');
-var Match = require('./Match');
-var Game = require('./Game');
-var Letter = require('./Letter');
+var User = require('./class/User');
+var Match = require('./class/Match');
+var Game = require('./class/Game');
+var Letter = require('./class/Letter');
 
 var Controllers = {
     User: require('./controllers/User'),

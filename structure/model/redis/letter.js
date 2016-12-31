@@ -1,5 +1,5 @@
 var Redis = require('./server');
-var LetterClass = require('./../../Letter');
+var LetterClass = require('./../../class/Letter');
 
 var Letter = {
     genLetter: genLetter,

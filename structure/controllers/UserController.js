@@ -1,0 +1,1 @@
+var UserManager = require('./../UserManager');

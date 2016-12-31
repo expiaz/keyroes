@@ -1,9 +1,56 @@
-var timer_module = require('timer.js');
+'use strict';
 
-Array.prototype.indexOfObj || (Array.prototype.indexOfObj = function(prop, value) {
-    return this[this.map(function (e){return e.hasOwnProperty(prop) ? e[prop] : undefined;}).indexOf(value)]
-});
+var clock = require('timer.js');
 
+class TimerManager{
+    constructor(){
+        this.timers = [];
+    }
+
+    add(props){
+        console.log(this.timers);
+        this.timers[props.id] =
+        {
+            id: props.id,
+            timer:new clock({
+                tick:props.tick,
+                ontick: props.ontick,
+                onend: props.onend
+            })
+        };
+        if(props.time) this.start(props.id,props.time);
+    }
+
+    start(id,time){
+        console.log(this.timers[id]);
+        if(this.timers[id]) this.timers[id].timer.start(time);
+        console.log(this.timers[id]);
+    }
+
+    get(id){
+        if(this.timers[id] && this.timers[id].timer._.status == 'started') return this.timers[id].timer.getDuration();
+    }
+
+    pause(id){
+        if(this.timers[id]) this.timers[id].timer.pause();
+    }
+
+    restart(id){
+        if(this.timers[id]) this.timers[id].timer.start();
+    }
+
+    stop(id){
+        if(this.timers[id]) this.timers[id].timer.stop();
+    }
+
+    remove(id){
+        if(this.timers[id]) this.timers[id].destroy();
+    }
+
+
+}
+
+/*
 var TimerManager = function(){
     this.timers = [];
     this.add = function(id,tick,ontick_cb,onend_cb){
@@ -37,5 +84,6 @@ var TimerManager = function(){
         //this.timers.indexOfObj('id',id).timer.stop();
     }
 }
+*/
 
 module.exports = new TimerManager();

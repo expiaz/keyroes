@@ -8,8 +8,13 @@ var server = app.listen(3000,function () {
 
 var TimerManager = require('./TimerManager');
 
-TimerManager.add(1,1,ontick,onend);
-TimerManager.start(1,5);
+TimerManager.add({
+    id:1,
+    tick:1,
+    time:5,
+    ontick:ontick,
+    onend:onend
+});
 
 function ontick(time){
     console.log(time);
