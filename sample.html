@@ -16,6 +16,41 @@
     </style>
 </head>
 <body>
-abcdefghijklmopqrst
+<button id="a">all</button>
+<button id="b">game</button>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+
+    document.getElementById("a").addEventListener("click",function (e) {
+        HallEngine();
+    });
+    document.getElementById("b").addEventListener("click",function (e) {
+        GameEngine();
+    });
+
+    function HallEngine() {
+        var socket = io('/hall');
+        socket.on('keepAlive',function (content) {
+            console.log("keepalive all")
+            document.getElementsByTagName("body").innerHTML = content;
+        })
+        socket.on('dc',function (raison) {
+            alert(raison)
+        })
+    }
+
+    function GameEngine(){
+        var socket = io('/game');
+        socket.on('keepAlive',function (content) {
+            console.log("keepalive game")
+            document.getElementsByTagName("body").innerHTML = content;
+        })
+
+        socket.on('dc',function (raison) {
+            alert(raison)
+        })
+    }
+
+</script>
 </body>
 </html>

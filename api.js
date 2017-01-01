@@ -1,8 +1,24 @@
-var express = require('express');
-var app = express();
+'use strict';
 
-app.get('/', function (req, res) {
-    res.send('Hello World!');
-});
+class Person{
+    constructor(name,weight,height){
+        this.name = name;
+        this.weight = weight;
+        this.height = height;
+    }
 
-app.listen(3000);
+    Private(){
+        console.log(a);
+    }
+
+    Public(){
+        console.log("public");
+    }
+
+    CallPrivate(){
+        this.Private();
+    }
+
+}
+
+console.log(new Person('j',2,2).Private())

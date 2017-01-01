@@ -1,8 +1,5 @@
 'use strict';
 
-var game = require('./../class/Game');
-var clock = require('timer.js');
-
 class GameManager{
     constructor(){
         this.games = [];
@@ -19,6 +16,10 @@ class GameManager{
 
     get(id){
         if(this.games[id]) return this.games[id];
+    }
+
+    delete(id){
+        if(this.games[id]) this.games[id].destroy();
     }
 }
 
