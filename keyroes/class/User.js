@@ -3,7 +3,7 @@
 var Manager = {
     User:require('./../Manager/UserManager'),
     Game:require('./../Manager/GameManager'),
-    Match: require('./../Manager/MatchManager')
+    //Match: require('./../Manager/MatchManager')
 };
 
 var io = require('../Io');
@@ -33,10 +33,6 @@ class User{
 
     send(content){
         sockets[this.sid].emit('message',content);
-    }
-
-    sendToRoom(content){
-        io.to(this.room).emit('message',content);
     }
 
     disconnect(){

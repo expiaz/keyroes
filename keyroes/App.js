@@ -1,7 +1,7 @@
 'use strict';
 var io = require('./Io');
 var connected = io.sockets.connected;
-var UserManager = require('./Manager/UserManager');
+var userController = require('./controllers/UserController');
 
 class Dispatcher{
     constructor(){
@@ -9,11 +9,11 @@ class Dispatcher{
     }
 
     register(user){
-        UserManager.register(user);
+        userController.register(user);
     }
 
     disconnect(sid){
-        UserManager.disconnect(sid);
+        userController.disconnect(sid);
     }
 
 }

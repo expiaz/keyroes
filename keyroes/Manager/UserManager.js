@@ -1,10 +1,5 @@
 'use strict';
 
-var UserClass = require('./../class/User');
-var state = require('./../utils/constants').User.State;
-var io = require('../Io');
-var connected = io.sockets.connected;
-
 class UserManager{
     constructor(){
         this.users = [];

@@ -23,6 +23,10 @@
     socket.on('k-already-connected',function () {
         document.getElementsByTagName('div')[0].innerHTML = 'Deja co';
     });
+
+    socket.on('k-message',function (msg) {
+        document.getElementsByTagName('div')[0].innerHTML += '<br>'+msg;
+    })
 </script>
 </body>
 </html>
