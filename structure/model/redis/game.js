@@ -66,15 +66,15 @@ function delGame(id,fn) {
     isGame(id,function (r) {
         if(!r) return fn(true,"delGame Game doesn't exists");
         letterRedis.lrangeLetters(id,function (err,letters) {
-            if(err) fn(true,letters);
+            if(err) return fn(true,letters);
             letterRedis.delLetters(id,function (err,res) {
-                if(err) fn(true,res);
+                if(err) return fn(true,res);
                 letterRedis.delLettersTypeHistory(id,function (err,res) {
-                    if(err) fn(true,res);
+                    if(err) return fn(true,res);
                     getGame(id,[],function (err,game) {
-                        if(err) fn(true,res);
+                        if(err) return fn(true,res);
                         letterRedis.delLetter(game.letter,function (err,res) {
-                            if(err) fn(true,res);
+                            if(err) return fn(true,res);
                             Redis.srem("games",id,function (err,res) {
                                 if(err) throw new Error(err);
                                 Redis.del("game:"+id,function (err,res) {
