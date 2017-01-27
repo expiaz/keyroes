@@ -20,7 +20,7 @@ class UserController{
     }
 
     disconnect(sid){
-        if(!userManager.exists(sid)) throw new Error("[UserController:disconnect:"+sid+"] Can't DC a user that doesn't exists");
+        if(!userManager.exists(sid)) return console.log("[UserController:disconnect:"+sid+"] User wasn't logged");
         userManager.remove(sid).disconnect();
     }
 }
