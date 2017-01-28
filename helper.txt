@@ -1,2 +1,0 @@
-http://192.168.56.101:3000/
-sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT

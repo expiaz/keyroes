@@ -1,37 +1,32 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Titre de la page</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
-<div id="infos">
+<div></div>
+<input>
+<button>click</button>
+<script src="/socket.io/socket.io.js" type="text/javascript"></script>
+<script>
+    var socket = io();
+    document.getElementsByTagName("button")[0].addEventListener("click",function (e) {
+        console.log("registering")
+        socket.emit('k-register',document.getElementsByTagName("input")[0].value);
+    });
 
-</div>
-<div style="display: none;" class="p_infos"><span id="j1"></span> points : <span class="j1_points">0</span> <input type="text" onkeypress="javascript:return false" name="keycode"/></div>
-<div style="display: none;" class="p_infos"><span id="j2"></span> points : <span class="j2_points">0</span> </div>
-<div id="game" style="display: none;">
+    socket.on('k-name-taken',function () {
+        document.getElementsByTagName('div')[0].innerHTML = 'Nom deja prit';
+    });
 
-</div>
-<div id="clearfix"></div>
-<span id="timer" style="display: none;"></span>
-<form id="register">
-    <input type="text" name="username" autofocus required placeholder="your username"/>
-    <input type="submit" name="register" value="Register"/>
-</form>
-<span id="username" style="display:none"></span>
-<button id="join_queue" style="display:none">Join queue</button>
-<button id="join_match" style="display: none;">Join match</button>
-<button id="decline_match" style="display: none;">Decline match</button>
-<div id="chat">
+    socket.on('k-already-connected',function () {
+        document.getElementsByTagName('div')[0].innerHTML = 'Deja co';
+    });
 
-</div>
-<form id="message" style="display: none;">
-    <input type="text" name="message" autofocus required placeholder="message..."/>
-    <input type="submit" name="send" value="Send"/>
-</form>
-<script src="/socket.io/socket.io.js"></script>
-<script src="build/client.min.js"></script>
+    socket.on('k-message',function (msg) {
+        document.getElementsByTagName('div')[0].innerHTML += '<br>'+msg;
+    })
+</script>
 </body>
 </html>

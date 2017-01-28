@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form>
+    <input type="text" name="login" placeholder="login"/>
+    <input type="password" name="password" placeholder="password"/>
+    <input type="submit" name="sub" value="submit"/>
+</form>
+<div class="error" stype="display:none"></div>
+<script src="/socket.io/socket.io.js" type="text/javascript"></script>
+<script src="/jquery.min.js" type="text/javascript"></script>
+<script>
+    $(document).ready(function () {
+        $('input[type=submit]').on('click',function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url:'/auth',
+                type: 'POST',
+                data: 'login='+$('input[name=login]').val()+'&password='+$('input[name=password]').val()+'&action=login',
+                success:login
+            });
+        });
+
+        function login(data,status){
+            if(data.success && data.token) {
+                localStorage.keyroesToken = data.token;
+                console.log(data);
+                document.location.href = '/';
+            }
+            else
+                $('.error').html(data.message).show();
+        }
+    });
+</script>
+</body>
+</html>
