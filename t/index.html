@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <button>click</button>
+    <div></div>
+    <script src="/socket.io/socket.io.js" type="text/javascript"></script>
+    <script>
+        var socket = io();
+        document.getElementsByTagName('button')[0].addEventListener('click',function (e) {
+            socket.emit('trigger');
+        });
+        socket.on('click',function (views) {
+            document.getElementsByTagName('div')[0].innerHTML = views;
+        });
+    </script>
+</body>
+</html>

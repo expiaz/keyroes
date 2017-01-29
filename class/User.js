@@ -1,8 +1,8 @@
 'use strict';
 
 var Manager = {
-    User:require('../Manager/UserManager'),
-    Game:require('../Manager/GameManager'),
+    User:require('./UserManager'),
+    Game:require('./GameManager'),
     //Match: require('./../Manager/MatchManager')
 };
 
@@ -15,6 +15,7 @@ class User{
     constructor(sid,username){
         this.id;
         this.sid = sid;
+        this.ip;
         this.username = username;
         this.match = 0;
         this.room = baseconstants.Chat.Room.HALL;

@@ -5,6 +5,8 @@ var middleware = require('./mid');
 var auth = require('./Auth');
 
 var app = express();
+var serv = require('http').Server(app);
+
 
 //static assets
 app.use(express.static(__dirname + '/public'));
@@ -16,11 +18,13 @@ app.use(bodyParser.json());
 //auth
 app.post('/auth',auth.authUser);
 
+//middleware api
+app.use('/api',middleware.api);
+
 //middleware
 app.use(middleware.express);
 
-//routing api
-//app.use('/api',router);
+
 
 //base page
 app.get('/', function(req, res){

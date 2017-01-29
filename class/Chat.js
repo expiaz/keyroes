@@ -3,7 +3,7 @@
 var constants = require('../utils/constants').Chat;
 var io = require('../Io');
 var connected = io.sockets.connected;
-var UserManager = require('../Manager/UserManager');
+var UserManager = require('./UserManager');
 
 class Chat{
     constructor(){

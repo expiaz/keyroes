@@ -21,7 +21,7 @@ class UserManager{
 
     get(id){
         if(this.users[id]) return this.users[id];
-        else return -1;
+        return -1;
     }
 
     remove(id){

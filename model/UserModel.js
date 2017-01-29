@@ -1,29 +1,26 @@
-var redis = require('./redis/server');
-var userClass = require('./../class/User');
-var Q = require('q');
+'use strict';
+var manager = require('./UserManager');
+var sql = require('mysql');
 
-var db = {
-    sadd: Q.nbind(redis.sadd,redis),
-    smembers : Q.nbind(redis.smembers,redis),
-    srem: Q.nbind(redis.smembers,redis),
-    sscan: Q.nbind(redis.sscan,redis)
-}
+
 
 class UserModel{
     constructor(){}
 
-    CheckUsername(username){
-        return db.sscan("usernames","0","match",username,"count","999")
-            .then(function (res) {
-                return 1
-            });
+    queryGenerator(fields,value){
+        return 'SELECT '+ (fields ? Array.isArray(fields) ? fields.join(',') : fields : '*') +' FROM USER ' + (value ? Array.isArray(value) ?  'WHERE '+ value.map(function(exp){ return Array.isArray(exp) ? exp.join(' ') : exp }).join(' AND ') : 'WHERE '+ value : ';');
     }
 
+    getUser(fields){
+        if(!fields)
+        var sql = 'SELECT * FROM USER',
+            f = [],
+            v = [];
 
-
-    Register(sid,username){
-        var user = new userClass(sid,username);
-
+        for(var field in fields){
+            f.push(field);
+            v.push(fields[field]);
+        }
     }
 
 }
