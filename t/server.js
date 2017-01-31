@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var tpl_engine = require('../chino/chino');
 var chino = new tpl_engine();
 
-chino.register('auth.nuzzle');
+chino.register('auth.chino');
 
 var middleware = session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }});
 
@@ -32,21 +32,25 @@ app.post('/auth',function (req,res) {
 
     console.log(req.body);
 
-    if(!login || !pwd) return res.send(chino.render('auth'));
-    if(login != 'az' || pwd != 'az') return res.send(chino.render('auth',{error:'Bad credentials'}));
+    if(!login || !pwd){
+        res.setHeader('Content-Type', 'text/html')
+        res.end(chino.render('auth'));
+    }
+    else if(login != 'az' || pwd != 'az'){
+        res.setHeader('Content-Type', 'text/html')
+        res.end('end');
+    }
+    else{
+        req.session.login = login;
+        res.sendFile(__dirname + '/index.html');
+    }
 
-    req.session.login = login;
-
-    res.sendFile(__dirname + '/index.html');
 
 });
 
 app.use(function (req,res,next) {
-    console.log('request express');
-    console.log(req.session);
-    console.log(' ');
     if(req.session.login) return next();
-    res.send(chino.render('auth'));
+    return res.send(chino.render('auth'));
 });
 
 // Access the session as req.session

@@ -1,8 +1,8 @@
 'use strict';
 
 var Manager = {
-    User:require('./UserManager'),
-    Game:require('./GameManager'),
+    User: require('./UserManager'),
+    Game: require('./GameManager'),
     //Match: require('./../Manager/MatchManager')
 };
 
