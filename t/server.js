@@ -25,24 +25,18 @@ app.use(middleware);
 
 app.post('/auth',function (req,res) {
 
-    if(req.session.login) return res.sendFile(__dirname + '/index.html');
+    if(req.session.login) return res.json({success:true,message:'connected as '+req.session.login})
 
     var login = req.body.login,
         pwd = req.body.password;
 
     console.log(req.body);
 
-    if(!login || !pwd){
-        res.setHeader('Content-Type', 'text/html')
-        res.end(chino.render('auth'));
-    }
-    else if(login != 'az' || pwd != 'az'){
-        res.setHeader('Content-Type', 'text/html')
-        res.end('end');
-    }
+    if(!login || !pwd) return res.json({success:false,message:'no credentials'})
+    else if(login != 'az' || pwd != 'az') return res.json({success:false,message:'bad credentials'})
     else{
         req.session.login = login;
-        res.sendFile(__dirname + '/index.html');
+        return res.json({success:true,message:'connected as '+req.session.login});
     }
 
 
@@ -55,8 +49,8 @@ app.use(function (req,res,next) {
 
 // Access the session as req.session
 app.get('/', function(req, res) {
-   console.log('get /');
-   res.sendFile(__dirname + '/index.html');
+    res.setHeader('Content-Type', 'text/html')
+    res.end(chino.render('index.chino'));
 });
 
 io.use(function(socket, next) {

@@ -8,11 +8,10 @@
 <form>
     <input type="text" name="login" placeholder="login"/>
     <input type="password" name="password" placeholder="password"/>
+    <input type="checkbox" name="rememberme" checked/>
     <input type="submit" name="sub" value="submit"/>
 </form>
-<%if {{error}}%>
-<div class="error">{{error}}</div>
-<%endif%>
+<div></div>
 <script src="/socket.io/socket.io.js" type="text/javascript"></script>
 <script src="/jquery.min.js" type="text/javascript"></script>
 <script src="/js/auth.js" type="text/javascript"></script>
