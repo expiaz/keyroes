@@ -1,73 +1,66 @@
 var express = require('express');
 var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
-var session = require('express-session');
+
 var bodyParser = require('body-parser');
-var tpl_engine = require('../chino/chino');
-var chino = new tpl_engine();
+var session = require('./session');
 
+var Auth = require('./Auth');
+var Chino = require('./../chino/chino');
+chino = new Chino();
 chino.register('auth.chino');
-
-var middleware = session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }});
-
-server.listen(3000);
 
 //bodyParser
 app.use(bodyParser.urlencoded({extended: true }));
 app.use(bodyParser.json());
 
+//static files
 app.use(express.static(__dirname + '/public'));
 
-
 // Use the session middleware
-app.use(middleware);
+app.use(session);
 
-app.post('/auth',function (req,res) {
+app.get('/auth', function (req,res) {
+    res.set('Content-type', 'text/html');
+    return res.end(chino.render('auth', {error:false}));
+});
 
-    if(req.session.login) return res.json({success:true,message:'connected as '+req.session.login})
+app.post('/auth', function (req,res) {
 
-    var login = req.body.login,
-        pwd = req.body.password;
+    var authenticated;
 
-    console.log(req.body);
+    if(req.session.keyroesToken)
+        authenticated = Auth.validateToken(req.session.keyroesToken)
+    else
+        authenticated = Auth.authenticate(req.body.login, req.body.password);
 
-    if(!login || !pwd) return res.json({success:false,message:'no credentials'})
-    else if(login != 'az' || pwd != 'az') return res.json({success:false,message:'bad credentials'})
-    else{
-        req.session.login = login;
-        return res.json({success:true,message:'connected as '+req.session.login});
+    if(authenticated) {
+        console.log('Auth ok');
+        req.session.keyroesToken = Auth.getToken(req.body.login);
+        return res.redirect('/');
     }
-
+    else{
+        console.log('Auth bad');
+        res.set('Content-type', 'text/html');
+        return res.end(chino.render('auth', {error: true, message: 'bad credentials'}));
+    }
 
 });
 
+//base middlware
 app.use(function (req,res,next) {
-    if(req.session.login) return next();
-    return res.send(chino.render('auth'));
+    if(req.session.keyroesToken) return next();
+    return res.redirect('/auth');
 });
 
 // Access the session as req.session
 app.get('/', function(req, res) {
-    res.setHeader('Content-Type', 'text/html')
-    res.end(chino.render('index.chino'));
+    //res.setHeader('Content-Type', 'text/html');
+    res.sendFile(__dirname + '/index.html');
 });
 
-io.use(function(socket, next) {
-    middleware(socket.request, socket.request.res, next);
+var server = app.listen(3000, function (err) {
+    if(err) throw err;
+    console.log('Server listening');
 });
 
-io.on('connection', function (socket) {
-    console.log('socket log');
-    console.log(socket.request.session.login);
-    console.log(' ');
-
-    socket.on('trigger', function () {
-        console.log('socket trigger');
-        console.log(socket.request.session.login);
-        socket.request.session.click = ++socket.request.session.click || 1;
-        console.log(socket.request.session.click);
-        socket.emit('click',socket.request.session.click);
-        console.log(' ');
-    });
-});
+module.exports = server;

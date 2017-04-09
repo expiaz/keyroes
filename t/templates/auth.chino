@@ -5,15 +5,15 @@
     <title>Title</title>
 </head>
 <body>
-<form>
+<form method="post" action="">
     <input type="text" name="login" placeholder="login"/>
     <input type="password" name="password" placeholder="password"/>
-    <input type="checkbox" name="rememberme" checked/>
     <input type="submit" name="sub" value="submit"/>
 </form>
-<div></div>
-<script src="/socket.io/socket.io.js" type="text/javascript"></script>
-<script src="/jquery.min.js" type="text/javascript"></script>
-<script src="/js/auth.js" type="text/javascript"></script>
+<%if {{error}}%>
+<div class="error">
+    {{message}}
+</div>
+<%endif%>
 </body>
 </html>

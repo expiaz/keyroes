@@ -1,4 +1,4 @@
-(function () {
+(function ($) {
 
     var login,pwd;
 
@@ -39,4 +39,4 @@
     }
 
 
-})($);
+})(window.$ || window.jQuery);
