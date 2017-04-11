@@ -1,7 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var router = require('./Router');
-var middleware = require('./mid');
+var middleware = require('./Middleware');
 var auth = require('./Auth');
 
 var app = express();

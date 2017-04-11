@@ -1,5 +1,5 @@
 'use strict';
-var manager = require('./UserManager');
+var manager = require('./../manager/UserManager');
 var sql = require('mysql');
 
 

@@ -50,7 +50,7 @@ chino.prototype.register = function (tpl,name,vars) {
     if(!name || typeof name != "string")
         name = tpl.replace('.chino','');
 
-    this.cached[name] = fs.readFileSync('templates/'+tpl,'utf8');
+    this.cached[name] = fs.readFileSync(tpl.indexOf('/') !== -1 ? tpl : 'templates/'+tpl, 'utf8');
 
     if(!this.evaluate(this.cached[name]))
         throw new Error("Fail eval");

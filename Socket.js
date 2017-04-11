@@ -1,8 +1,8 @@
 'use strict';
-var dispatcher = require('./App');
+
 var io = require('./Io');
 var connected = io.sockets.connected;
-
+var dispatcher = require('./App');
 io.on('connection', function(socket) {
     socket.on('k-register',function (username) {
         console.log("registering")

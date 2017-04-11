@@ -1,6 +1,6 @@
 'use strict';
 
-var userManager = require('./UserManager');
+
 var chat = require('../class/Chat');
 var userClass = require('../class/User');
 var state = require('../utils/constants').User.State;

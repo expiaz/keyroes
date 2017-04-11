@@ -1,10 +1,6 @@
 'use strict';
 
-var Manager = {
-    User:require('./UserManager'),
-    Game:require('./GameManager'),
-    //Match: require('././MatchManager')
-};
+
 
 var constants = require('../utils/constants');
 

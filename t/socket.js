@@ -1,22 +1,39 @@
 var app = require('./server');
 var io = require('socket.io')(app);
-var session = require('./session');
+var session = require('./core/shared/session');
 
-var socketEvents = require('./constants').socketEvent;
+var Io = require('./core/shared/Io.js');
+var events = require('./core/shared/constants');
+var UserRepository = require('./core/repository/UserRepository');
+var User = require('./core/entity/User');
+
+
 
 //base middleware socketio
 io.use(function(socket, next) {
     session(socket.request, socket.request.res, next);
 });
 
+
+
 //bind events
 io.on('connection', function (socket) {
     console.log('Socket connecting');
-    if(typeof socket.request.session.keyroesToken !== "string") socket.disconnect(true);
-    console.log('Socket connected');
-    /*var User = UserManager.get(socket.request.session.keyroesToken);
-    socket.on(socketEvents.KEYPRESS, User.bind);
-    socket.on('disconnect', User.disconnect);*/
+
+    if(typeof socket.request.session.keyroesToken !== "string")
+        return socket.disconnect(true);
+
+    var user = UserRepository.get(socket.request.session.username);
+
+    if((user instanceof User) === false)
+        return socket.disconnect(true);
+
+    console.log('socket connected');
+
+    user.setSocket(socket);
+    user.sayHello();
+    socket.on(events.game.KEYPRESS, user.onKeypress);
+    socket.on('disconnect', user.disconnect);
 });
 
-module.exports = io;
+Io.setInstance(io);

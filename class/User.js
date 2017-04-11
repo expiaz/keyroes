@@ -1,10 +1,5 @@
 'use strict';
 
-var Manager = {
-    User: require('./UserManager'),
-    Game: require('./GameManager'),
-    //Match: require('./../Manager/MatchManager')
-};
 
 var io = require('../Io');
 var sockets = io.sockets.connected;
@@ -17,23 +12,15 @@ class User{
         this.sid = sid;
         this.ip;
         this.username = username;
-        this.match = 0;
+        this.match = null;
         this.room = baseconstants.Chat.Room.HALL;
-        this.game = 0;
+        this.game = null;
         this.state = constants.State.IN_HALL;
         this.answertomatch = constants.Answer.BASE;
     }
 
-    getMatch(){
-        return Manager.Match.get(this.match);
-    }
-
-    getGame(){
-        return Manager.Game.get(this.game);
-    }
-
     send(content){
-        sockets[this.sid].emit('message',content);
+        sockets[this.sid].emit('message', content);
     }
 
     disconnect(){
