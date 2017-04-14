@@ -9,12 +9,12 @@ class Clock{
         this.binded;
     }
 
-    bindGame(game){
-        this.binded = game;
+    bind(object){
+        this.binded = object;
         this.timer.options({
-            tick: game.options.timer.tick,
-            ontick: game.clockOnTick.bind(game),
-            onend: game.gameEnd.bind(game)
+            tick: object.options.timer.tick,
+            ontick: object.clockTick.bind(object),
+            onend: object.clockEnd.bind(object)
         });
     }
 
@@ -24,3 +24,5 @@ class Clock{
     }
 
 }
+
+module.exports = Clock;

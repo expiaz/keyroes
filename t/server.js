@@ -7,9 +7,6 @@ var session = require('./core/shared/session');
 var Auth = require('./core/Auth');
 var Chino = require('../chino/chino');
 
-var UserRepository = require('./core/repository/UserRepository');
-var User = require('./core/entity/User');
-
 chino = new Chino();
 chino.register(__dirname + '/templates/auth.chino', 'auth');
 
@@ -46,8 +43,8 @@ app.post('/auth', function (req,res) {
     if(authenticated) {
         console.log('Auth ok');
         req.session.keyroesToken = Auth.getToken(req.body.login);
-        req.session.username = req.body.login;
-        UserRepository.add(req.body.login,  new User(1, req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.session.keyroesToken, req.body.login));
+        req.session.keyroesUsername = req.body.login;
+        req.session.keyroesIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.session.keyroesToken;
         return res.redirect('/');
     }
     else{

@@ -5,23 +5,27 @@ var Map = require('../shared/Map');
 class UserRepository{
 
     constructor(){
-        this.users = new Map();
+        this.users = new Map();;
     }
 
-    add(login, user){
-        this.users.add(login, user);
+    init(){
+
     }
 
-    exists(login){
-        this.users.exists(login);
+    add(hash, user){
+        this.users.add(hash, user);
     }
 
-    get(login){
-        return this.users.get(login);
+    exists(hash){
+        this.users.exists(hash);
     }
 
-    remove(login){
-        this.users.remove(login);
+    get(hash){
+        return this.users.get(hash);
+    }
+
+    remove(hash){
+        this.users.remove(hash);
     }
 
 }

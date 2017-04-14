@@ -3,87 +3,168 @@
 
 var constants = require('../shared/constants');
 var Clock = require('./Clock');
-
-var io = require('../shared/io');
-var connected = io.sockets.connected;
+var LetterFactory = require('./../factory/LetterFactory');
+var Map = require('./../shared/Map');
+var Io = require('./../shared/Io');
 
 
 class Game{
 
     constructor(){
-        var p = Array.prototype.slice.call(arguments);
 
-        this.players = {};
-        p.forEach(function (player) {
-            if(this.players.hasOwnProperty(player.getPublicId()) === false)
-                this.players.setProperty(player.getPublicId(), {
-                    player: player,
-                    score: 0,
-                    streak: 0
-                });
-        }.bind(this));
+        this.socketPool = Io.getInstance();
 
-        this.id = p.reduce(function (gameId, player) {
+        this.spectators =  [];
+
+        let players = Array.prototype.slice.call(arguments);
+        if(Array.isArray(players[0]))
+            players = players[0];
+
+        this.id = "game" + players.reduce(function (gameId, player) {
             return gameId + player.getPublicId();
         }, this.players);
 
-        this.letter = 0;
+        this.players = new Map();
+        players.forEach(function (player) {
+            this.players.add(player.getPublicId(), {
+                user: player,
+                score: 0,
+                streak: 1,
+                good_answer: 0,
+                bad_answer: 0
+            });
+            player.enterGame(this);
+        }.bind(this));
+
+        this.letter;
+        this.deathLetter;
         this.letters = [];
         this.history = [];
-
         this.options = {
             timer: {
                 tick: 1,
                 time: 60,
                 angle: 0.17
             }
-        }
+        };
+
         this.clock = new Clock();
-        this.clock.bindGame(this);
+        this.clock.bind(this);
+        this.startGame();
+    }
+
+    addSpectator(player){
+        player.enterSpectate(this);
+        this.spectators.push(player);
+    }
+
+    removeSpectator(player){
+        let i = this.spectators.indexOf(player),
+            p = this.spectators[i];
+        p.leaveSpectate(this);
+        this.spectators.splice(i, 1);
     }
 
     getPublicId(){
         return this.id;
     }
 
-    clockOnTick(millis){
+    clockTick(millis){
         var display = (millis/1000).toFixed(1);
-        io.to(this.id).emit("clockTick", {time: display, angle: this.timer.settings.angle*display});
+        io.to(this.id).emit(constants.game.CLOCK_TICK, {time: display, angle: this.options.timer.angle*display});
     }
 
-    gameStart(){
-        io.to(this.id).emit('gameStart');
+    clockEnd(){
+        this.endGame();
+    }
+
+    startGame(){
+        io.to(this.id).emit(constants.game.BEGIN_GAME);
+        this.letter = LetterFactory.create();
+        this.deathLetter = LetterFactory.create();
         this.clock.start(this.options.timer.time);
+        this.sendLetter();
+        this.sendDeathLetter();
     }
 
-    gameEnd(){
+    handleKeypress(player, letterCode){
+        let p = this.players.get(player.getPublicId());
+        if(p === void 0) return;
 
+        let valid = 0;
+        if(this.letter.getCode() == letterCode){
+            //valid answer
+            valid = 1;
+
+            let p = this.players.get(player.getPublicId());
+            p.good_answer++;
+            p.score = p.score + (p.streak * 1);
+            p.streak = p.streak + 1;
+
+            this.letters.push(this.letter);
+            do{
+                this.letter = LetterFactory.create();
+            }while(this.letter.getLetterCode() === this.deathLetter.getLetterCode());
+            this.sendLetter();
+        }
+        else if(this.deathLetter.getCode() == letterCode){
+            valid = -1;
+            let p = this.players.get(player.getPublicId())
+            p.score = p.score - p.streak * 1 > 0 ? p.score - p.streak * 1 : 0;
+            p.streak = 1;
+            p.bad_answer++;
+            do{
+                this.deathLetter = LetterFactory.create();
+            }while(this.deathLetter.getLetterCode() === this.letter.getLetterCode());
+            this.sendDeathLetter();
+        }
+        else{
+            valid = 0
+            let p = this.players.get(player.getPublicId())
+            p.score = p.score - (p.score > 0 ? 1 : 0);
+            p.streak = 1;
+            p.bad_answer++;
+        }
+        this.historyze(player, letterCode, valid);
+        io.to(this.id).emit(constants.game.MAJ_HISTORY, this.history);
+        io.to(this.id).emit(constants.game.MAJ_POINTS, this.players.keys.map(function (e) {
+            let pl = this.players.get(e);
+            return {
+                user: pl.user.getPublicId(),
+                score: pl.score,
+                streak: pl.streak
+            };
+        }.bind(this)));
+    }
+
+    sendLetter(){
+        io.to(this.id).emit(constants.game.NEXT_LETTER, this.letter.objectize());
+    }
+
+    sendDeathLetter(){
+        io.to(this.id).emit(constants.game.NEXT_DEATH_LETTER, this.deathLetter.objectize());
+    }
+
+    historyze(p, lcode, valid){
+        this.history.push({
+            user: p.getUsername(),
+            valid: valid,
+            code: lcode
+        });
+    }
+
+    endGame(){
+        io.to(this.id).emit(constants.game.FINISH_GAME);
+        this.players.keys.forEach(function (e) {
+            let p = this.players.get(e);
+            p.leaveGame(this);
+        }.bind(this));
+        this.spectators.forEach(function (e) {
+            e.leaveSpectate(this);
+        }.bind(this))
     }
 
     /*
-
-    getLetterCode(){
-        return Math.floor(Math.random() * 255) % 2 ? Math.floor(Math.random() * 25) + 97 : Math.floor(Math.random() * 25) + 65;
-    }
-
-    getLetterColor(){
-        return [Math.floor(Math.random() * 255) + 1,Math.floor(Math.random() * 255) + 1,Math.floor(Math.random() * 255) + 1].join(',')
-    }
-
-    getLetterFont(){
-        return constants.Letter.Font[Math.floor(Math.random() * constants.Letter.Font.length)];
-    }
-
-    genLetter(){
-        return {
-            letter:this.getLetterCode(),
-            x:Math.floor(Math.random() * ( 100 )) + 1,
-            y:Math.floor(Math.random() * ( 100 )) + 1,
-            color: this.getLetterColor(),
-            size: Math.floor(Math.random() * ( 15 )) + 10,
-            font: this.getLetterFont()
-        }
-    }
 
     handleKeypress(sid,letter){
         var _l = this.getActualLetter(),
