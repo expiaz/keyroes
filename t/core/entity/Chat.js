@@ -28,7 +28,7 @@ class Chat{
     }
 
     sendEveryMessageTo(user){
-        user.getSocket().emit(cst.chat.RECEIVE_MESSAGE, this.messages);
+        user.getSocket().emit(cst.chat.MAJ_MESSAGES, this.messages);
     }
 
     addUser(user){

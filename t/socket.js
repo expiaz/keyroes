@@ -5,6 +5,7 @@ var session = require('./core/shared/session');
 var Io = require('./core/shared/Io.js');
 var events = require('./core/shared/constants');
 var User = require('./core/entity/User');
+var Auth = require('./core/Auth');
 
 
 var GameFactory = require('./core/factory/GameFactory');
@@ -37,11 +38,20 @@ io.on('connection', function (socket) {
     if(typeof socket.request.session.keyroesToken !== "string")
         return socket.disconnect(true);
 
+    if(!Auth.validateToken(socket.request.session.keyroesToken))
+        return socket.disconnect(true);
 
-    var user = new User(1, socket.request.session.keyroesIp, socket.request.session.keyroesToken, socket.request.session.keyroesUsername);
+    var user = null;
+
+    if(UserRepository.exists(socket.request.session.keyroesToken)){
+        user = UserRepository.get(socket.request.session.keyroesToken);
+    }
+    else{
+        user = new User(socket.request.session.keyroesId, socket.request.session.keyroesIp, socket.request.session.keyroesToken, socket.request.session.keyroesUsername);
+        UserRepository.add(user.getPublicId(), user);
+    }
+
     user.setSocket(socket);
-
-    UserRepository.add(user.getPublicId(), user);
 
     console.log('socket connected');
 

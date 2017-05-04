@@ -22,13 +22,19 @@ class User{
         this.answertomatch = constants.match.NO_ANSWER;
     }
 
+    getId(){
+        return this.id;
+    }
+
     getPublicId(){
         return this.token;
     }
 
     setSocket(socket){
+        console.log('setSocket', typeof this.socket, typeof socket);
         let needReconciliation = false;
         if(this.socket !== void 0){
+           console.log('deco');
            this.socket.disconnect(true);
            needReconciliation = true;
         }

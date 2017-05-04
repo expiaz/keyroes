@@ -17,7 +17,7 @@ class UserRepository{
     }
 
     exists(hash){
-        this.users.exists(hash);
+        return this.users.exists(hash);
     }
 
     get(hash){

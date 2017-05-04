@@ -31,12 +31,20 @@ const ROOM = {
 }
 
 const CHAT = {
+
+    //rooms
     HALL: 'k-chat-hall',
     GAME: 'k-chat-game',
     ALL: 'k-chat-all',
+
+    //basics
     SEND_MESSAGE: 'k-chat-send_message',
     RECEIVE_MESSAGE: 'k-chat-receive_message',
+
+    //all messages
     MAJ_MESSAGES: 'k-chat-maj_messages',
+
+    //types
     USER_MESSAGE: 'k-chat-user_message',
     SERVER_MESSAGE: 'k-chat-server_message'
 }

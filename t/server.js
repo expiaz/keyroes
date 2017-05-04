@@ -28,30 +28,39 @@ app.get('/auth', function (req,res) {
 });
 
 app.post('/auth', function (req,res) {
-    var authenticated;
 
     if(req.session.keyroesToken) {
         console.log('already auth token : ', req.session.keyroesToken);
-        authenticated = Auth.validateToken(req.session.keyroesToken);
+        if(Auth.validateToken(req.session.keyroesToken)){
+            console.log('Auth ok');
+            return res.redirect('/');
+        }
+        else{
+            console.log('Auth bad');
+            res.set('Content-type', 'text/html');
+            return res.end(chino.render('auth', {error: true, message: 'bad credentials'}));
+        }
     }
     else{
         console.log('authenticating with ', req.body.login, req.body.password);
-        authenticated = Auth.authenticate(req.body.login, req.body.password);
+        Auth.authenticate(req.body.login, req.body.password)
+            .done(function (id) {
+                if(id > 0){
+                    console.log('Auth ok');
+                    req.session.keyroesId = id;
+                    req.session.keyroesToken = Auth.getToken(req.body.login);
+                    req.session.keyroesUsername = req.body.login;
+                    req.session.keyroesIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.session.keyroesToken;
+                    return res.redirect('/');
+                }
+                else{
+                    console.log('Auth bad');
+                    res.set('Content-type', 'text/html');
+                    return res.end(chino.render('auth', {error: true, message: 'bad credentials'}));
+                }
+            })
     }
 
-
-    if(authenticated) {
-        console.log('Auth ok');
-        req.session.keyroesToken = Auth.getToken(req.body.login);
-        req.session.keyroesUsername = req.body.login;
-        req.session.keyroesIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.session.keyroesToken;
-        return res.redirect('/');
-    }
-    else{
-        console.log('Auth bad');
-        res.set('Content-type', 'text/html');
-        return res.end(chino.render('auth', {error: true, message: 'bad credentials'}));
-    }
 
 });
 

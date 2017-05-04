@@ -1,7 +1,9 @@
 'use strict';
 
-var md5 = require('md5');
+var bcrypt = require('bcrypt');
 var Map = require('./shared/Map');
+var UserModel = require('./model/UserModel');
+
 
 /*
 var UserRepository = require('./repository/UserRepository');
@@ -15,32 +17,17 @@ class Auth{
     }
 
     authenticate(login, password){
-        var exists = login == 'az' && password == 'az';
-            /*UserModel.find({
-            select: 'count (id)',
-            where: 'login = :login AND password = :password'
-        }, {
-            login: login,
-            password: md5(password)
-        });*/
-
-        if(exists){
-            if(this.tokens.contains(login))
-                return true;
-
-            var hash = md5(login);
-            this.tokens.add(login, hash);
-            return true;
-            /*
-            if(UserRepository.get(login) instanceof User)
-                return false;
-
-            var hash = md5(login);
-            this.tokens.add(login, hash);
-            return true;
-            */
-        }
-        return false;
+        var salt = bcrypt.genSaltSync(10);
+        var hash = bcrypt.hashSync(password, salt);
+        return UserModel.auth(login, password)
+            .then(function (id) {
+                if(id > 0){
+                    if(this.tokens.contains(login))
+                        return id;
+                    this.tokens.add(login, hash);
+                }
+                return id;
+            }.bind(this));
     }
 
     validateToken(token){
