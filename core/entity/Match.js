@@ -7,14 +7,13 @@ var Io = require('./../shared/Io');
 
 class Match{
 
-    constructor(){
+    constructor(players){
+
+
 
         this.socketPool = Io.getInstance();
 
-        this.players = Array.prototype.slice.call(arguments);
-
-        if(Array.isArray(arguments[0]))
-            this.players = arguments[0];
+        this.players = players;
 
         this.counter = [];
 
@@ -34,6 +33,8 @@ class Match{
         this.clock.bind(this);
 
         this.players.forEach(function (player) {
+            player.getSocket().emit(constants.queue.LEAVE_QUEUE_ACK);
+            player.getSocket().join(this.id);
             player.enterMatch(this);
         }.bind(this));
 
@@ -41,7 +42,22 @@ class Match{
     }
 
     updatePlayerCounter(answer){
-        this.counter.push(answer);
+        switch (answer){
+            case constants.match.ACCEPT_MATCH:
+                this.counter.push(true);
+                break;
+            case constants.match.DECLINE_MATCH:
+                this.counter.push(false);
+        }
+        this.socketPool.to(this.id).emit(constants.match.MAJ_COUNTER, this.counter);
+    }
+
+    userLeave(user){
+        let player = this.players.indexOf(user);
+        if(player === -1)
+            return;
+        this.players[player].setAnswer(constants.match.DECLINE_MATCH);
+        this.counter = Array(this.players.length).fill(false);
         this.socketPool.to(this.id).emit(constants.match.MAJ_COUNTER, this.counter);
     }
 
@@ -51,16 +67,28 @@ class Match{
     }
 
     clockEnd(){
+
+        this.socketPool.to(this.id).emit(constants.match.LEAVE_MATCH);
+
         let accepting = true;
         this.players.forEach(function (p) {
-            accepting = accepting && p.getAnswer() === constants.match.ACCEPT_MATCH ? true : false;
+            let answer = p.getAnswer() === constants.match.ACCEPT_MATCH ? true : false;
+            accepting = accepting && answer;
+            p.getSocket().leave(this.id);
         }.bind(this));
-        if(accepting)
+        if(accepting){
             GameFactory.create(this.players);
-        else
-            this.players.forEach(function (e) {
-                e.abortMatch();
+        }
+        else{
+            this.players.forEach(function (p) {
+                let answer = p.getAnswer() === constants.match.ACCEPT_MATCH ? true : false;
+                if(answer)
+                    p.enterQueue();
+                else
+                    p.abortMatch();
             });
+        }
+
 
     }
 

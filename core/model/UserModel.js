@@ -36,14 +36,14 @@ class UserModel{
     }
 
     auth(login, password){
-        let sql =`SELECT id FROM ${this.table} WHERE login = :login AND password = :password;`;
+        let sql =`SELECT * FROM ${this.table} WHERE login = :login AND password = :password;`;
         return this.queryData(sql, {login: login, password: password})
             .then(function (values) {
-                return values.id;
+                return values;
             })
             .catch(function (error) {
                 errorHandler.error('UserModel::auth', arguments, error);
-                return 0;
+                return {id: 0};
             });
     }
 

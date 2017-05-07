@@ -5,18 +5,20 @@ var Letter = require('./Letter');
 var QueueManager = require('./../manager/QueueManager');
 var ChatManager = require('./../manager/ChatManager');
 
+var UserRepository = require('./../repository/UserRepository');
+
 class User{
 
     constructor(id, ip, hash, username){
         this.id = id;
         this.sid;
-        this.socket;
+        this.socket = null;
         this.ip = ip;
         this.username = username;
         this.token = hash;
-        this.match;
-        this.game;
-        this.spectate;
+        this.match = null;
+        this.game = null;
+        this.spectate = null;
         this.room = constants.room.IN_HALL;
         this.state = constants.state.IN_HALL;
         this.answertomatch = constants.match.NO_ANSWER;
@@ -31,11 +33,13 @@ class User{
     }
 
     setSocket(socket){
-        console.log('setSocket', typeof this.socket, typeof socket);
+        console.log('User::setSocket', this.socket !== null, typeof socket);
         let needReconciliation = false;
-        if(this.socket !== void 0){
-           console.log('deco');
-           this.socket.disconnect(true);
+        if(this.socket !== null){
+           console.log('setSocket reconciling');
+           let s = this.socket;
+           this.socket = null;
+           s.disconnect(true);
            needReconciliation = true;
         }
         this.sid = socket.id;
@@ -43,7 +47,9 @@ class User{
         if(needReconciliation){
             this.reconcile();
         }
-        console.log('co');
+        else{
+            this.connect();
+        }
     }
 
     getSid(){
@@ -66,12 +72,18 @@ class User{
         ChatManager.addUser(this);
     }
 
+    leaveChat(){
+        ChatManager.removeUser(this);
+    }
+
     enterQueue(){
+        console.log(this.getPublicId() + ' enterQueue');
         this.state = constants.state.IN_QUEUE;
         QueueManager.add(this);
     }
 
     leaveQueue(){
+        console.log(this.getPublicId() + ' leaveQueue');
         this.state = constants.state.HALL;
         QueueManager.remove(this);
     }
@@ -81,6 +93,7 @@ class User{
         this.spectate = null;
         this.match = match;
         this.state = constants.state.IN_MATCH;
+        this.socket.emit(constants.match.ENTER_MATCH);
     }
 
     abortMatch(){
@@ -104,6 +117,7 @@ class User{
     leaveGame(game){
         this.game = null;
         this.match = null;
+        this.socket.leave(game.getPublicId());
         ChatManager.addUser(this);
         this.state = constants.state.IN_HALL;
     }
@@ -121,8 +135,7 @@ class User{
         this.spectate = null;
         this.match = null;
         this.socket.leave(game.getPublicId());
-        this.socket.join(constants.room.HALL);
-        this.state = constants.state.IN_HALL;
+        this.reconcile();
     }
 
     getGame(){
@@ -130,7 +143,7 @@ class User{
     }
 
     setAnswer(answer){
-        if(this.match == null) return;
+        if(this.match === null) return;
         this.answertomatch = answer;
         this.match.updatePlayerCounter(answer);
     }
@@ -153,40 +166,66 @@ class User{
      * Socket bindings
      */
     onKeypress(letterCode){
-        this.game && Letter.isValid(letterCode) && this.game.handleKeypress(this, letterCode);
+        if(this.game !== null)
+            return;
+        if(!Letter.isValid(letterCode))
+            return;
+        this.game.handleKeypress(this, letterCode);
     }
 
     reconcile(){
+        console.log('User::reconcile');
         switch(this.state){
             case constants.state.IN_HALL:
-                // TODO ChatController.userDisconnect(this.username);
-                //TODO UserManager.remove(this.sid);
+                ChatManager.reconcile(this);
+                break;
+            case constants.state.IN_QUEUE:
+                ChatManager.reconcile(this);
+                QueueManager.add(this);
                 break;
             case constants.state.IN_MATCH:
+                ChatManager.reconcile(this);
+                this.match.reconcile(this);
                 break;
             case constants.state.IN_GAME:
+                this.game.reconcile(this);
                 break;
             case constants.state.IN_SPECTATE:
+                this.spectate.reconcile(this);
                 break;
         }
     }
 
+    connect(){
+        console.log('User::connect');
+        this.enterChat();
+    }
+
     disconnect(){
-        console.log('dc');
-        /*
+        if(this.socket === null)
+            return;
+        console.log('User::disconnect');
+
         switch(this.state){
-            case constants.State.IN_HALL:
-                // TODO ChatController.userDisconnect(this.username);
-                //TODO UserManager.remove(this.sid);
+            case constants.state.IN_HALL:
+                ChatManager.removeUser(this);
                 break;
-            case constants.State.IN_MATCH:
+            case constants.state.IN_QUEUE:
+                ChatManager.removeUser(this);
+                QueueManager.remove(this);
                 break;
-            case constants.State.IN_GAME:
+            case constants.state.IN_MATCH:
+                ChatManager.removeUser(this);
+                this.match.userLeave(this);
                 break;
-            case constants.State.IN_SPECTATE:
+            case constants.state.IN_GAME:
+                this.game.userLeave(this);
+                break;
+            case constants.state.IN_SPECTATE:
+                this.spectate.removeSpectator(this);
                 break;
         }
-        */
+        UserRepository.remove(this.getPublicId());
     }
 }
 

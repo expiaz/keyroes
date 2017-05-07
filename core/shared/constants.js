@@ -1,45 +1,48 @@
 const GAME = {
-    IN_GAME: 'k-game-in_game',
     LEAVE_GAME: 'k-game-leave_game',
-    BEGIN_GAME: 'k-game-begin_game',
+    ENTER_GAME: 'k-game-enter_game',
+
     FINISH_GAME: 'k-game-finish_game',
+
     WIN_GAME: 'k-game-win_game',
     LOOSE_GAME: 'k-game-loose_game',
+
     CLOCK_TICK: 'k-game-clock_tick',
 
-    KEYPRESS: 'k-game-keypress',
     NEXT_LETTER: 'k-game-next_letter',
     NEXT_DEATH_LETTER: 'k-game-next_death_letter',
+
     GOOD_ANSWER: 'k-game_good_answer',
     BAD_ANSWER: 'k-game-bad_answer',
+
     MAJ_POINTS: 'k-game-maj_points',
     MAJ_HISTORY: 'k-game-maj_history'
 }
+
+const USER  = {
+    KEYPRESS: 'k-user-keypress',
+    SEND_MESSAGE: 'k-user-message'
+}
+
 const MATCH = {
-    IN_MATCH: 'k-match-in_match',
+    ENTER_MATCH: 'k-match-enter_match',
+    LEAVE_MATCH: 'k-match-leave_match',
+
     ACCEPT_MATCH: 'k-match-accept_match',
     DECLINE_MATCH: 'k-match-decline_match',
     NO_ANSWER: 'k-match-no_answer',
+
     CLOCK_TICK: 'k-match-clock_tick',
     MAJ_COUNTER: 'k-match-maj_counter'
 }
 
 const ROOM = {
-    IN_HALL: 'k-room-in_hall',
-    IN_GAME: 'k-room-in_game',
     HALL: 'k-room-hall'
 }
 
 const CHAT = {
-
-    //rooms
-    HALL: 'k-chat-hall',
-    GAME: 'k-chat-game',
-    ALL: 'k-chat-all',
-
     //basics
-    SEND_MESSAGE: 'k-chat-send_message',
-    RECEIVE_MESSAGE: 'k-chat-receive_message',
+    NEW_MESSAGE: 'k-chat-message',
 
     //all messages
     MAJ_MESSAGES: 'k-chat-maj_messages',
@@ -66,13 +69,21 @@ const LETTER = {
     ]
 }
 
-const SERVER = {
-    MESSAGE: 'k-server-message'
+const QUEUE = {
+    ENTER_QUEUE: 'k-queue-subs',
+    ENTER_QUEUE_ACK: 'k-queue-subs_ack',
+    LEAVE_QUEUE: 'k-queue-unsubs',
+    LEAVE_QUEUE_ACK: 'k-queue-unsubs_ack',
 }
 
-const QUEUE = {
-    SUBSCRIBE: 'k-queue-subs',
-    UNSUBSCRIBE: 'k-queue-unsubs'
+const SPECTATE = {
+    ENTER_SPECTATE: 'k-spec-enter_spec',
+    LEAVE_SPECATE: 'k-spec-leave_spec'
+}
+
+const HALL = {
+    ENTER_HALL: 'k-hall-enter',
+    LEAVE_HALL: 'k-hall-leave'
 }
 
 
@@ -82,5 +93,7 @@ module.exports.room = ROOM;
 module.exports.chat = CHAT;
 module.exports.state = STATE;
 module.exports.letter = LETTER;
-module.exports.server = SERVER;
+module.exports.user = USER;
 module.exports.queue = QUEUE;
+module.exports.spectate = SPECTATE;
+module.exports.hall = HALL;

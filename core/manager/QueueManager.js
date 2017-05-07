@@ -19,7 +19,7 @@ class QueueManager{
 
         this.currentQueue.add(player);
 
-        if(this.currentQueue.length == 2)
+        if(this.currentQueue.triggered)
             this.currentQueue = null;
     }
 

@@ -20,13 +20,13 @@ class Auth{
         var salt = bcrypt.genSaltSync(10);
         var hash = bcrypt.hashSync(password, salt);
         return UserModel.auth(login, password)
-            .then(function (id) {
-                if(id > 0){
+            .then(function (user) {
+                if(user.id > 0){
                     if(this.tokens.contains(login))
-                        return id;
+                        return user;
                     this.tokens.add(login, hash);
                 }
-                return id;
+                return user;
             }.bind(this));
     }
 

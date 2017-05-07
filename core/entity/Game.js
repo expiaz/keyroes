@@ -40,6 +40,7 @@ class Game{
         this.deathLetter;
         this.letters = [];
         this.history = [];
+        this.score = [];
         this.options = {
             timer: {
                 tick: 1,
@@ -71,7 +72,7 @@ class Game{
 
     clockTick(millis){
         var display = (millis/1000).toFixed(1);
-        io.to(this.id).emit(constants.game.CLOCK_TICK, {time: display, angle: this.options.timer.angle*display});
+        this.socketPool.to(this.id).emit(constants.game.CLOCK_TICK, {time: display, angle: this.options.timer.angle*display});
     }
 
     clockEnd(){
@@ -79,7 +80,7 @@ class Game{
     }
 
     startGame(){
-        io.to(this.id).emit(constants.game.BEGIN_GAME);
+        this.socketPool.to(this.id).emit(constants.game.ENTER_GAME);
         this.letter = LetterFactory.create();
         this.deathLetter = LetterFactory.create();
         this.clock.start(this.options.timer.time);
@@ -104,7 +105,7 @@ class Game{
             this.letters.push(this.letter);
             do{
                 this.letter = LetterFactory.create();
-            }while(this.letter.getLetterCode() === this.deathLetter.getLetterCode());
+            }while(this.letter.getCode() === this.deathLetter.getCode());
             this.sendLetter();
         }
         else if(this.deathLetter.getCode() == letterCode){
@@ -115,7 +116,7 @@ class Game{
             p.bad_answer++;
             do{
                 this.deathLetter = LetterFactory.create();
-            }while(this.deathLetter.getLetterCode() === this.letter.getLetterCode());
+            }while(this.deathLetter.getCode() === this.letter.getCode());
             this.sendDeathLetter();
         }
         else{
@@ -126,23 +127,28 @@ class Game{
             p.bad_answer++;
         }
         this.historyze(player, letterCode, valid);
-        io.to(this.id).emit(constants.game.MAJ_HISTORY, this.history);
-        io.to(this.id).emit(constants.game.MAJ_POINTS, this.players.keys.map(function (e) {
+        this.actualizeScore();
+        this.socketPool.to(this.id).emit(constants.game.MAJ_HISTORY, this.history);
+        this.socketPool.to(this.id).emit(constants.game.MAJ_POINTS, this.score);
+    }
+
+    actualizeScore(){
+        this.score = this.players.keys.map(function (e) {
             let pl = this.players.get(e);
             return {
-                user: pl.user.getPublicId(),
+                user: pl.user.getUsername(),
                 score: pl.score,
                 streak: pl.streak
             };
-        }.bind(this)));
+        }.bind(this));
     }
 
     sendLetter(){
-        io.to(this.id).emit(constants.game.NEXT_LETTER, this.letter.objectize());
+        this.socketPool.to(this.id).emit(constants.game.NEXT_LETTER, this.letter.objectize());
     }
 
     sendDeathLetter(){
-        io.to(this.id).emit(constants.game.NEXT_DEATH_LETTER, this.deathLetter.objectize());
+        this.socketPool.to(this.id).emit(constants.game.NEXT_DEATH_LETTER, this.deathLetter.objectize());
     }
 
     historyze(p, lcode, valid){
@@ -154,7 +160,7 @@ class Game{
     }
 
     endGame(){
-        io.to(this.id).emit(constants.game.FINISH_GAME);
+        this.socketPool.to(this.id).emit(constants.game.FINISH_GAME);
         this.players.keys.forEach(function (e) {
             let p = this.players.get(e);
             p.leaveGame(this);

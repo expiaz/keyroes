@@ -44,12 +44,12 @@ app.post('/auth', function (req,res) {
     else{
         console.log('authenticating with ', req.body.login, req.body.password);
         Auth.authenticate(req.body.login, req.body.password)
-            .done(function (id) {
-                if(id > 0){
+            .done(function (user) {
+                if(user.id > 0){
                     console.log('Auth ok');
-                    req.session.keyroesId = id;
+                    req.session.keyroesId = user.id;
                     req.session.keyroesToken = Auth.getToken(req.body.login);
-                    req.session.keyroesUsername = req.body.login;
+                    req.session.keyroesUsername = user.username;
                     req.session.keyroesIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress, req.session.keyroesToken;
                     return res.redirect('/');
                 }

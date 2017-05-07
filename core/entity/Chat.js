@@ -14,6 +14,7 @@ class Chat{
     }
 
     send(user, message){
+        console.log("chat::send " + message);
         let u = this.users.get(user.getPublicId());
         if(u === void 0)
             return;
@@ -21,10 +22,10 @@ class Chat{
             type: cst.chat.USER_MESSAGE,
             username: u.getUsername(),
             message: message,
-            time: new Date().getHours() + " : " + new Date().getMinutes()
+            time: +new Date()
         };
         this.messages.push(msg);
-        this.socketPool.to(this.id).send(cst.chat.RECEIVE_MESSAGE, msg);
+        this.socketPool.to(this.id).emit(cst.chat.NEW_MESSAGE, msg);
     }
 
     sendEveryMessageTo(user){
@@ -38,11 +39,11 @@ class Chat{
             type: cst.chat.SERVER_MESSAGE,
             username: user.getUsername(),
             message: user.getUsername() + " joined the room",
-            time: new Date().getHours() + " : " + new Date().getMinutes()
+            time: +new Date()
         }
         this.sendEveryMessageTo(user);
         this.messages.push(m);
-        this.socketPool.to(this.id).emit(cst.chat.RECEIVE_MESSAGE, m);
+        this.socketPool.to(this.id).emit(cst.chat.NEW_MESSAGE, m);
     }
 
     removeUser(user){
@@ -52,10 +53,15 @@ class Chat{
             type: cst.chat.SERVER_MESSAGE,
             username: user.getUsername(),
             message: user.getUsername() + " leaved the room",
-            time: new Date().getHours() + " : " + new Date().getMinutes()
+            time: +new Date()
         }
         this.messages.push(m);
-        this.socketPool.to(this.id).send(cst.chat.RECEIVE_MESSAGE, m);
+        this.socketPool.to(this.id).emit(cst.chat.NEW_MESSAGE, m);
+    }
+
+    reconcile(user){
+        this.sendEveryMessageTo(user);
+        user.getSocket().join(this.id);
     }
 
 }

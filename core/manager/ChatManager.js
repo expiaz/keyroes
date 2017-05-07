@@ -10,7 +10,7 @@ class ChatManager{
     }
 
     init(){
-       this.chat = new Chat(cst.chat.HALL)
+       this.chat = new Chat(cst.room.HALL)
     }
 
     send(player, message){
@@ -23,6 +23,14 @@ class ChatManager{
 
     removeUser(player){
         this.chat.removeUser(player);
+    }
+
+    sendAll(user){
+        this.chat.sendEveryMessageTo(user);
+    }
+
+    reconcile(user){
+        this.chat.reconcile(user);
     }
 
 }

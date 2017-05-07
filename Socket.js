@@ -13,6 +13,7 @@ var LetterFactory = require('./core/factory/LetterFactory');
 var MatchFactory = require('./core/factory/MatchFactory');
 
 var ChatManager = require('./core/manager/ChatManager');
+
 var QueueManager = require('./core/manager/QueueManager');
 
 var GameRepository = require('./core/repository/GameRepository');
@@ -33,6 +34,7 @@ QueueManager.init();
 
 //bind events
 io.on('connection', function (socket) {
+
     console.log('Socket connecting');
 
     if(typeof socket.request.session.keyroesToken !== "string")
@@ -55,15 +57,35 @@ io.on('connection', function (socket) {
 
     console.log('socket connected');
 
-    user.enterChat();
+    /*
+    CHAT
+     */
+    socket.on(events.user.SEND_MESSAGE, user.sendMessage.bind(user));
 
-    socket.on(events.chat.SEND_MESSAGE, user.sendMessage);
+    /*
+    QUEUE
+     */
+    socket.on(events.queue.ENTER_QUEUE, user.enterQueue.bind(user));
+    socket.on(events.queue.LEAVE_QUEUE, user.leaveQueue.bind(user));
 
-    socket.on(events.queue.SUBSCRIBE, user.enterQueue);
-    socket.on(events.queue.UNSUBSCRIBE, user.leaveQueue);
+    /*
+    MATCH
+     */
+    socket.on(events.match.ACCEPT_MATCH, function () {
+        this.setAnswer(events.match.ACCEPT_MATCH);
+    }.bind(user));
+    socket.on(events.match.DECLINE_MATCH, function () {
+        this.setAnswer(events.match.DECLINE_MATCH)
+    }.bind(user));
 
-    socket.on(events.game.KEYPRESS, user.onKeypress);
+    /*
+    GAME
+     */
+    socket.on(events.user.KEYPRESS, user.onKeypress.bind(user));
 
+    /*
+    DC
+     */
+    socket.on('disconnect', user.disconnect.bind(user));
 
-    socket.on('disconnect', user.disconnect);
 });
