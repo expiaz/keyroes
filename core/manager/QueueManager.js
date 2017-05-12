@@ -18,9 +18,10 @@ class QueueManager{
             this.currentQueue = new Queue(2);
 
         this.currentQueue.add(player);
+    }
 
-        if(this.currentQueue.triggered)
-            this.currentQueue = null;
+    reconcile(player){
+
     }
 
     remove(player){

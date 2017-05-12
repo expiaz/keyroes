@@ -14,19 +14,32 @@ export default class Dispatcher extends Component{
         this.state = {
             state: constants.state.IN_HALL
         }
-        this.bind();
     }
 
-    bind(){
-        this.props.socket.on(constants.hall.ENTER_HALL, function () {
-            this.setState({state: constants.state.IN_HALL});
-        }.bind(this));
+    componentDidMount(){
+        this.props.socket.on(constants.hall.ENTER_HALL, this.enterHall.bind(this));
+        this.props.socket.on(constants.game.ENTER_GAME, this.enterGame.bind(this));
+        this.props.socket.on(constants.user.RESOLVE, this.resolve.bind(this));
+    }
 
-        this.props.socket.on(constants.game.ENTER_GAME, function () {
-            this.setState({state: constants.state.IN_GAME});
-        }.bind(this));
+    componentWillUnmout(){
+        this.props.socket.removeListener(constants.hall.ENTER_HALL, this.enterHall);
+        this.props.socket.removeListener(constants.game.ENTER_GAME, this.enterGame);
+        this.props.socket.removeListener(constants.user.RESOLVE, this.resolve);
+    }
 
+    resolve(state){
+        if(state.state === constants.state.IN_GAME) {
+            this.enterGame();
+        }
+    }
 
+    enterHall(){
+        this.setState({state: constants.state.IN_HALL});
+    }
+
+    enterGame(){
+        this.setState({state: constants.state.IN_GAME});
     }
 
     getHallLayout(){

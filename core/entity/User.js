@@ -93,6 +93,7 @@ class User{
         this.spectate = null;
         this.match = match;
         this.state = constants.state.IN_MATCH;
+        this.socket.join(match.getPublicId());
         this.socket.emit(constants.match.ENTER_MATCH);
     }
 
@@ -153,7 +154,7 @@ class User{
     }
 
     send(content){
-        this.socket.emit(constants.server.MESSAGE, content);
+        this.socket.emit(constants.chat.SERVER_MESSAGE, content);
     }
 
     sendMessage(content){
@@ -178,22 +179,29 @@ class User{
         switch(this.state){
             case constants.state.IN_HALL:
                 ChatManager.reconcile(this);
+                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_QUEUE:
                 ChatManager.reconcile(this);
-                QueueManager.add(this);
+                QueueManager.reconcile(this);
+                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_MATCH:
                 ChatManager.reconcile(this);
                 this.match.reconcile(this);
+                console.log("RECONCILE IN MATCH : ", this.answertomatch);
+                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state, answerMatch: this.answertomatch})}.bind(this), 0);
                 break;
             case constants.state.IN_GAME:
                 this.game.reconcile(this);
+                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_SPECTATE:
                 this.spectate.reconcile(this);
+                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state, answerMatch: this.answertomatch})}.bind(this), 100);
                 break;
         }
+
     }
 
     connect(){

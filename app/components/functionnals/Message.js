@@ -7,8 +7,7 @@ export default function Message(props) {
     console.log(date);
     return (
         <div style={{color:props.type === constants.chat.USER_MESSAGE ? 'black' : 'red'}}>
-            <span>{date.getHours() + " : " +  date.getMinutes()}</span>
-            <a href={"/profile/" + props.user}>{props.user}</a>
+            <strong>{date.getHours() + ":" +  date.getMinutes()} - <a href={"/profile/" + props.user}>{props.user}</a> : </strong>
             {props.content}
         </div>
     )

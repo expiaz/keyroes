@@ -14,34 +14,73 @@ export default class Match extends Component{
             counter: []
         };
 
-        this.bind();
-
         this.handleAccept = this.handleAccept.bind(this);
         this.handleDecline = this.handleDecline.bind(this);
+
+        console.log("match create");
     }
 
-    bind(){
-        this.props.socket.on(constants.match.ENTER_MATCH, function () {
-            this.setState({ displayed: true });
-        }.bind(this));
+    componentDidMount(){
+        this.props.socket.on(constants.match.ENTER_MATCH, this.enterMatch.bind(this));
 
-        this.props.socket.on(constants.match.CLOCK_TICK, function (tick) {
-            this.setState({angle: tick.angle, time: tick.time});
-        }.bind(this));
+        this.props.socket.on(constants.match.CLOCK_TICK, this.majClock.bind(this));
 
-        this.props.socket.on(constants.match.MAJ_COUNTER, function (counter) {
-            this.setState({counter: counter});
-        }.bind(this));
+        this.props.socket.on(constants.match.MAJ_COUNTER, this.majCounter.bind(this));
 
-        this.props.socket.on(constants.match.LEAVE_MATCH, function (counter) {
-            this.setState({
-                angle: 0,
-                time: 0,
-                answer: -1,
-                displayed: false,
-                counter: []
-            });
-        }.bind(this));
+        this.props.socket.on(constants.match.LEAVE_MATCH, this.leaveMatch.bind(this));
+
+        this.props.socket.on(constants.user.RESOLVE, this.resolve.bind(this));
+    }
+
+    componentWillUnmout(){
+        this.props.socket.removeListener(constants.match.ENTER_MATCH, this.enterMatch);
+
+        this.props.socket.removeListener(constants.match.CLOCK_TICK, this.majClock);
+
+        this.props.socket.removeListener(constants.match.MAJ_COUNTER, this.majCounter);
+
+        this.props.socket.removeListener(constants.match.LEAVE_MATCH, this.leaveMatch);
+    }
+
+    resolve(state){
+        console.log("match resolve", state);
+        if(state.state === constants.state.IN_MATCH){
+            this.enterMatch();
+            if(state.hasOwnProperty('answerMatch')){
+                if(state.answerMatch === constants.match.ACCEPT_MATCH){
+                    this.setState({ answer: 1 });
+                }
+                else if(state.answerMatch === constants.match.DECLINE_MATCH){
+                    this.setState({ answer: 0 });
+                }
+            }
+        }
+        else{
+            this.leaveMatch();
+        }
+    }
+
+    enterMatch(){
+        this.setState({ displayed: true });
+    }
+
+    leaveMatch(){
+        this.setState({
+            angle: 0,
+            time: 0,
+            answer: -1,
+            displayed: false,
+            counter: []
+        });
+    }
+
+    majClock(tick){
+        this.setState({angle: tick.angle, time: tick.time});
+    }
+
+    majCounter(counter){
+        console.log("Match majCounter", counter);
+        this.setState({counter: counter});
     }
 
     handleAccept(){

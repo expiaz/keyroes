@@ -10,10 +10,7 @@ export default class Input extends Component{
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-    }
-
-    componentDidMount(){
-        document.addEventListener('keypress', this.handleKeySubmit.bind(this));
+        this.handleKeySubmit = this.handleKeySubmit.bind(this);
     }
 
     handleKeySubmit(e){
@@ -23,12 +20,8 @@ export default class Input extends Component{
         }
     }
 
-    componentWillUnmount(){
-        document.removeEventListener('keypress', this.handleKeySubmit);
-    }
-
     handleSubmit(){
-        if(this.state.content.length > 0 && this.state.content.length <= 50)
+        if(this.state.content.length > 0 && this.state.content.length)
             this.props.submitHook(this.state.content);
         this.setState({content: ''});
     }
@@ -40,7 +33,7 @@ export default class Input extends Component{
     render(){
         return(
             <div>
-                <input type="text" onChange={this.handleChange} value={this.state.content}/>
+                <input type="text" onKeyPress={this.handleKeySubmit} onChange={this.handleChange} value={this.state.content}/>
                 <button onClick={this.handleSubmit}>{this.props.text}</button>
             </div>
         );

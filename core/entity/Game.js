@@ -7,6 +7,7 @@ var LetterFactory = require('./../factory/LetterFactory');
 var Map = require('./../shared/Map');
 var Io = require('./../shared/Io');
 
+var GameManager = require('../manager/GameManager');
 
 class Game{
 
@@ -51,7 +52,14 @@ class Game{
 
         this.clock = new Clock();
         this.clock.bind(this);
+
+        GameManager.add(this);
+
         this.startGame();
+    }
+
+    getPublicId(){
+        return this.id;
     }
 
     addSpectator(player){
@@ -64,10 +72,6 @@ class Game{
             p = this.spectators[i];
         p.leaveSpectate(this);
         this.spectators.splice(i, 1);
-    }
-
-    getPublicId(){
-        return this.id;
     }
 
     clockTick(millis){
@@ -159,6 +163,10 @@ class Game{
         });
     }
 
+    userLeave(player){
+
+    }
+
     endGame(){
         this.socketPool.to(this.id).emit(constants.game.FINISH_GAME);
         this.players.keys.forEach(function (e) {
@@ -167,7 +175,9 @@ class Game{
         }.bind(this));
         this.spectators.forEach(function (e) {
             e.leaveSpectate(this);
-        }.bind(this))
+        }.bind(this));
+
+        GameManager.remove(this);
     }
 
     /*

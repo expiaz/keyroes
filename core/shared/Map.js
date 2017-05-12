@@ -30,6 +30,14 @@ class Map{
         return this.values.splice(index, 1);
     }
 
+    getKeys(){
+        return this.keys;
+    }
+
+    getValues(){
+        return this.values;
+    }
+
 }
 
 module.exports = Map;

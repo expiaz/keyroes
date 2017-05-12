@@ -21,7 +21,8 @@ const GAME = {
 
 const USER  = {
     KEYPRESS: 'k-user-keypress',
-    SEND_MESSAGE: 'k-user-message'
+    SEND_MESSAGE: 'k-user-message',
+    RESOLVE: 'k-user-resolve'
 }
 
 const MATCH = {

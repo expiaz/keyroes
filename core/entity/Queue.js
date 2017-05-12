@@ -14,10 +14,9 @@ class Queue{
     add(player){
         console.log('Queue::add ', this.queue.length);
         if(this.queue.indexOf(player) !== -1)
-            return player.getSocket().emit(constants.queue.ENTER_QUEUE_ACK);
+            return;
         console.log('Queue::added');
         this.queue.push(player);
-        player.getSocket().emit(constants.queue.ENTER_QUEUE_ACK);
         this.trigger();
     }
 
@@ -26,8 +25,11 @@ class Queue{
         if(this.queue.indexOf(player) !== -1){
             console.log('Queue::removed');
             this.queue.splice(this.queue.indexOf(player), 1);
-            player.getSocket().emit(constants.queue.LEAVE_QUEUE_ACK);
         }
+    }
+
+    contains(player){
+        return this.queue.indexOf(player) !== -1;
     }
 
     trigger(){

@@ -9,26 +9,34 @@ export default class Queue extends Component{
         this.state = {
             subscribed: false
         };
-        this.bind();
         this.handleSubscribe = this.handleSubscribe.bind(this);
     }
 
-    bind(){
-        this.props.socket.on(constants.queue.ENTER_QUEUE_ACK, function () {
-            this.setState({subscribed: true});
-        }.bind(this));
+    componentDidMount(){
+        this.props.socket.on(constants.user.RESOLVE, this.resolve.bind(this));
+    }
 
-        this.props.socket.on(constants.queue.LEAVE_QUEUE_ACK, function () {
+    componentWillUnmout(){
+        this.props.socket.removeListener(constants.user.RESOLVE, this.resolve);
+    }
+
+    resolve(state){
+        if(state.state === constants.state.IN_QUEUE){
+            this.handleSubscribe();
+        }
+        else{
             this.setState({subscribed: false});
-        }.bind(this));
+        }
     }
 
     handleSubscribe(){
         if(this.state.subscribed){
             this.props.socket.emit(constants.queue.LEAVE_QUEUE);
+            this.setState({subscribed: false});
         }
         else{
             this.props.socket.emit(constants.queue.ENTER_QUEUE);
+            this.setState({subscribed: true});
         }
     }
 

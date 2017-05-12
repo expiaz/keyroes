@@ -1,6 +1,7 @@
 'use strict';
 
 var Game = require('./../entity/Game');
+var GameManager = require('../manager/GameManager');
 
 class GameFactory{
 

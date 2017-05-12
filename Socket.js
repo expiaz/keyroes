@@ -68,6 +68,8 @@ io.on('connection', function (socket) {
     socket.on(events.queue.ENTER_QUEUE, user.enterQueue.bind(user));
     socket.on(events.queue.LEAVE_QUEUE, user.leaveQueue.bind(user));
 
+    //TODO: RECONCILE EVENT => send the actual state to update the front
+
     /*
     MATCH
      */

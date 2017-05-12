@@ -9,8 +9,6 @@ class Match{
 
     constructor(players){
 
-
-
         this.socketPool = Io.getInstance();
 
         this.players = players;
@@ -33,12 +31,14 @@ class Match{
         this.clock.bind(this);
 
         this.players.forEach(function (player) {
-            player.getSocket().emit(constants.queue.LEAVE_QUEUE_ACK);
-            player.getSocket().join(this.id);
             player.enterMatch(this);
         }.bind(this));
 
         this.clock.start(this.options.timer.time);
+    }
+
+    getPublicId(){
+        return this.id;
     }
 
     updatePlayerCounter(answer){
@@ -66,6 +66,11 @@ class Match{
         this.socketPool.to(this.id).emit(constants.match.CLOCK_TICK, {time: display, angle: this.options.timer.angle*display});
     }
 
+    reconcile(player){
+        player.enterMatch(this);
+        player.getSocket().emit(constants.match.MAJ_COUNTER, this.counter);
+    }
+
     clockEnd(){
 
         this.socketPool.to(this.id).emit(constants.match.LEAVE_MATCH);
@@ -76,6 +81,7 @@ class Match{
             accepting = accepting && answer;
             p.getSocket().leave(this.id);
         }.bind(this));
+
         if(accepting){
             GameFactory.create(this.players);
         }

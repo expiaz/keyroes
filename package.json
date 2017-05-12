@@ -20,8 +20,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
-    "build": "webpack"
+    "start": "nodemon app.js",
+    "build": "webpack --watch"
   },
   "repository": "git+https://github.com/expiaz/keyroes.git",
   "author": "expiaz",
