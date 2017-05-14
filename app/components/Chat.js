@@ -13,16 +13,34 @@ export default class Chat extends Component{
             messages: []
         };
         this.handleSubmitMessage = this.handleSubmitMessage.bind(this);
+
+        this.sync = this.sync.bind(this);
+        this.newMessage = this.newMessage.bind(this);
+        this.allMessages = this.allMessages.bind(this);
     }
 
     componentDidMount(){
-        this.props.socket.on(constants.chat.NEW_MESSAGE, this.newMessage.bind(this));
-        this.props.socket.on(constants.chat.MAJ_MESSAGES, this.allMessages.bind(this));
+        this.props.socket.on(constants.user.SYNCHRONIZE, this.sync);
+        this.props.socket.on(constants.chat.NEW_MESSAGE, this.newMessage);
+        this.props.socket.on(constants.chat.MAJ_MESSAGES, this.allMessages);
+
+        this.props.socket.emit(constants.user.NEED_SYNC);
     }
 
     componentWillUnmount(){
-        this.props.socket.removeListener(constants.chat.NEW_MESSAGE, this.newMessage);
-        this.props.socket.removeListener(constants.chat.MAJ_MESSAGES, this.allMessages);
+        console.log('Chat unmount');
+
+        console.log(this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync));
+        console.log(this.props.socket.removeListener(constants.chat.NEW_MESSAGE, this.newMessage));
+        console.log(this.props.socket.removeListener(constants.chat.MAJ_MESSAGES, this.allMessages));
+
+        console.log('chat finished unmouting');
+    }
+
+    sync(state){
+        if(state.hasOwnProperty('chat')){
+            this.allMessages(state.chat.messages);
+        }
     }
 
     newMessage(message){
@@ -34,7 +52,7 @@ export default class Chat extends Component{
     }
 
     formatMessage(message){
-        return <Message key={message.time}  user={message.username} type={message.type} content={message.message} time={message.time}/>;
+        return <Message key={message.time + Array.from(message.username).reduce((e,i,g) => message.username.charCodeAt(i) + g, 0) + Array.from(message.message).reduce((e,i,g) => message.message.charCodeAt(i) + g, 0)}  user={message.username} type={message.type} content={message.message} time={message.time}/>;
     }
 
     handleSubmitMessage(content){

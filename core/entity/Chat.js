@@ -14,6 +14,11 @@ class Chat{
     }
 
     send(user, message){
+
+        if(this.messages.length === 500){
+           this.messages.splice(0, 100);
+        }
+
         console.log("chat::send " + message);
         let u = this.users.get(user.getPublicId());
         if(u === void 0)
@@ -60,8 +65,13 @@ class Chat{
     }
 
     reconcile(user){
-        this.sendEveryMessageTo(user);
         user.getSocket().join(this.id);
+    }
+
+    getActualState(){
+        return {
+            messages: this.messages.slice()
+        }
     }
 
 }

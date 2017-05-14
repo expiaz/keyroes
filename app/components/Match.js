@@ -17,43 +17,73 @@ export default class Match extends Component{
         this.handleAccept = this.handleAccept.bind(this);
         this.handleDecline = this.handleDecline.bind(this);
 
+        this.enterMatch = this.enterMatch.bind(this);
+        this.majClock = this.majClock.bind(this);
+        this.majCounter = this.majCounter.bind(this);
+        this.leaveMatch = this.leaveMatch.bind(this);
+        this.sync = this.sync.bind(this);
+
+
         console.log("match create");
     }
 
     componentDidMount(){
-        this.props.socket.on(constants.match.ENTER_MATCH, this.enterMatch.bind(this));
+        this.props.socket.on(constants.match.ENTER_MATCH, this.enterMatch);
 
-        this.props.socket.on(constants.match.CLOCK_TICK, this.majClock.bind(this));
+        this.props.socket.on(constants.match.CLOCK_TICK, this.majClock);
 
-        this.props.socket.on(constants.match.MAJ_COUNTER, this.majCounter.bind(this));
+        this.props.socket.on(constants.match.MAJ_COUNTER, this.majCounter);
 
-        this.props.socket.on(constants.match.LEAVE_MATCH, this.leaveMatch.bind(this));
+        this.props.socket.on(constants.match.LEAVE_MATCH, this.leaveMatch);
 
-        this.props.socket.on(constants.user.RESOLVE, this.resolve.bind(this));
+        this.props.socket.on(constants.user.SYNCHRONIZE, this.sync);
+
+        this.props.socket.emit(constants.user.NEED_SYNC);
     }
 
-    componentWillUnmout(){
-        this.props.socket.removeListener(constants.match.ENTER_MATCH, this.enterMatch);
+    componentWillUnmount(){
+        console.log('Match unmount');
 
-        this.props.socket.removeListener(constants.match.CLOCK_TICK, this.majClock);
+        console.log(this.props.socket.removeListener(constants.match.ENTER_MATCH, this.enterMatch));
 
-        this.props.socket.removeListener(constants.match.MAJ_COUNTER, this.majCounter);
+        console.log(this.props.socket.removeListener(constants.match.CLOCK_TICK, this.majClock));
 
-        this.props.socket.removeListener(constants.match.LEAVE_MATCH, this.leaveMatch);
+        console.log(this.props.socket.removeListener(constants.match.MAJ_COUNTER, this.majCounter));
+
+        console.log(this.props.socket.removeListener(constants.match.LEAVE_MATCH, this.leaveMatch));
+
+        console.log(this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync));
+
+        console.log('Match finished unmouting');
     }
 
-    resolve(state){
-        console.log("match resolve", state);
-        if(state.state === constants.state.IN_MATCH){
-            this.enterMatch();
-            if(state.hasOwnProperty('answerMatch')){
-                if(state.answerMatch === constants.match.ACCEPT_MATCH){
-                    this.setState({ answer: 1 });
-                }
-                else if(state.answerMatch === constants.match.DECLINE_MATCH){
-                    this.setState({ answer: 0 });
-                }
+    sync(state){
+        /*
+        {
+            state: string
+            match: {
+                counter: [],
+                answer: string
             }
+        }
+         */
+        if(state.state === constants.state.IN_MATCH && state.hasOwnProperty('match')){
+            let newState = {
+                displayed: true,
+                counter: state.match.counter
+            };
+
+            if(state.match.answer === constants.match.ACCEPT_MATCH){
+                newState.answer = 1;
+            }
+            else if(state.match.answer === constants.match.DECLINE_MATCH){
+                newState.answer = 0;
+            }
+            else{
+                newState.answer = -1;
+            }
+
+            this.setState(newState);
         }
         else{
             this.leaveMatch();
@@ -79,7 +109,6 @@ export default class Match extends Component{
     }
 
     majCounter(counter){
-        console.log("Match majCounter", counter);
         this.setState({counter: counter});
     }
 

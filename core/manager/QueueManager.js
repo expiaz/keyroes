@@ -20,6 +20,10 @@ class QueueManager{
         this.currentQueue.add(player);
     }
 
+    /**
+     * A player in queue changed socket
+     * @param player
+     */
     reconcile(player){
 
     }
@@ -28,6 +32,10 @@ class QueueManager{
         if(this.currentQueue === null)
             return;
         this.currentQueue.remove(player);
+    }
+
+    getActualState(player){
+        return this.currentQueue.getActualState(player);
     }
 
 

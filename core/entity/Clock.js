@@ -23,6 +23,10 @@ class Clock{
 
     }
 
+    getTime(){
+        return this.timer.getDuration();
+    }
+
 }
 
 module.exports = Clock;

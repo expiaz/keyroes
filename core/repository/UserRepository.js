@@ -5,11 +5,19 @@ var Map = require('../shared/Map');
 class UserRepository{
 
     constructor(){
-        this.users = new Map();;
+        this.users = new Map();
     }
 
     init(){
 
+    }
+
+    sync(){
+        console.log("UserRepo syncing of ", this.users.getKeys().length);
+        this.users.getKeys().forEach(function (id) {
+            let user = this.users.get(id);
+            user.synchronize();
+        }.bind(this));
     }
 
     add(hash, user){

@@ -4,6 +4,7 @@ var constants = require('./../shared/constants');
 var Letter = require('./Letter');
 var QueueManager = require('./../manager/QueueManager');
 var ChatManager = require('./../manager/ChatManager');
+var GameManager = require('./../manager/GameManager');
 
 var UserRepository = require('./../repository/UserRepository');
 
@@ -121,6 +122,7 @@ class User{
         this.socket.leave(game.getPublicId());
         ChatManager.addUser(this);
         this.state = constants.state.IN_HALL;
+        this.synchronize();
     }
 
     enterSpectate(game){
@@ -175,33 +177,66 @@ class User{
     }
 
     reconcile(){
-        console.log('User::reconcile');
         switch(this.state){
             case constants.state.IN_HALL:
                 ChatManager.reconcile(this);
-                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_QUEUE:
                 ChatManager.reconcile(this);
                 QueueManager.reconcile(this);
-                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_MATCH:
                 ChatManager.reconcile(this);
                 this.match.reconcile(this);
-                console.log("RECONCILE IN MATCH : ", this.answertomatch);
-                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state, answerMatch: this.answertomatch})}.bind(this), 0);
                 break;
             case constants.state.IN_GAME:
                 this.game.reconcile(this);
-                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state})}.bind(this), 0);
                 break;
             case constants.state.IN_SPECTATE:
                 this.spectate.reconcile(this);
-                setTimeout(function(){this.socket.emit(constants.user.RESOLVE, {state: this.state, answerMatch: this.answertomatch})}.bind(this), 100);
+                break;
+        }
+        this.synchronize();
+    }
+
+    getActualState(){
+        let actualState = {
+            state: this.state
+        };
+
+        switch (this.state){
+            case constants.state.IN_HALL:
+                actualState.chat = ChatManager.getActualState();
+                actualState.games = GameManager.getActualState();
+                break;
+            case constants.state.IN_QUEUE:
+                actualState.chat = ChatManager.getActualState();
+                actualState.games = GameManager.getActualState();
+
+                actualState.queue = QueueManager.getActualState(this);
+                break;
+            case constants.state.IN_MATCH:
+                actualState.chat = ChatManager.getActualState();
+                actualState.games = GameManager.getActualState();
+
+                actualState.match = Object.assign({}, {answer: this.answertomatch}, this.match.getActualState());
+                break;
+
+            case constants.state.IN_GAME:
+                actualState.game = this.game.getActualState();
+                break;
+            case constants.state.IN_SPECTATE:
+                actualState.spectate = this.spectate.getActualState();
                 break;
         }
 
+        return actualState;
+    }
+
+    synchronize(){
+        console.log('User::sync');
+
+        this.socket.emit(constants.user.SYNCHRONIZE, this.getActualState());
     }
 
     connect(){

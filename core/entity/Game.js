@@ -21,9 +21,9 @@ class Game{
         if(Array.isArray(players[0]))
             players = players[0];
 
-        this.id = "game" + players.reduce(function (gameId, player) {
+        this.id = players.reduce(function (gameId, player) {
             return gameId + player.getPublicId();
-        }, this.players);
+        }, "game");
 
         this.players = new Map();
         players.forEach(function (player) {
@@ -131,16 +131,16 @@ class Game{
             p.bad_answer++;
         }
         this.historyze(player, letterCode, valid);
-        this.actualizeScore();
+        this.score = this.getActualScore();
         this.socketPool.to(this.id).emit(constants.game.MAJ_HISTORY, this.history);
         this.socketPool.to(this.id).emit(constants.game.MAJ_POINTS, this.score);
     }
 
-    actualizeScore(){
-        this.score = this.players.keys.map(function (e) {
+    getActualScore(){
+        return this.players.keys.map(function (e) {
             let pl = this.players.get(e);
             return {
-                user: pl.user.getUsername(),
+                username: pl.user.getUsername(),
                 score: pl.score,
                 streak: pl.streak
             };
@@ -169,8 +169,8 @@ class Game{
 
     endGame(){
         this.socketPool.to(this.id).emit(constants.game.FINISH_GAME);
-        this.players.keys.forEach(function (e) {
-            let p = this.players.get(e);
+        this.players.getKeys().forEach(function (e) {
+            let p = this.players.get(e).user;
             p.leaveGame(this);
         }.bind(this));
         this.spectators.forEach(function (e) {
@@ -178,6 +178,18 @@ class Game{
         }.bind(this));
 
         GameManager.remove(this);
+    }
+
+    reconcile(player){
+        player.getSocket().join(this.getPublicId());
+    }
+
+    getActualState(){
+        return {
+            scores: this.getActualScore(),
+            history: this.history.slice(),
+            id: this.getPublicId()
+        }
     }
 
     /*

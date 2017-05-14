@@ -33,6 +33,10 @@ class ChatManager{
         this.chat.reconcile(user);
     }
 
+    getActualState(){
+        return this.chat.getActualState();
+    }
+
 }
 
 module.exports = new ChatManager();

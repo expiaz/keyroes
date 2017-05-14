@@ -41,6 +41,12 @@ class Queue{
         }
     }
 
+    getActualState(player){
+        if(! this.contains(player))
+            return false;
+        return true;
+    }
+
 }
 
 module.exports = Queue;

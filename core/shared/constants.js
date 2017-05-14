@@ -22,7 +22,9 @@ const GAME = {
 const USER  = {
     KEYPRESS: 'k-user-keypress',
     SEND_MESSAGE: 'k-user-message',
-    RESOLVE: 'k-user-resolve'
+    RECONCILE: 'k-user-reconcile',
+    SYNCHRONIZE: 'k-user-sync',
+    NEED_SYNC: 'k-front-sync'
 }
 
 const MATCH = {
@@ -72,9 +74,8 @@ const LETTER = {
 
 const QUEUE = {
     ENTER_QUEUE: 'k-queue-subs',
-    ENTER_QUEUE_ACK: 'k-queue-subs_ack',
     LEAVE_QUEUE: 'k-queue-unsubs',
-    LEAVE_QUEUE_ACK: 'k-queue-unsubs_ack',
+    TRIGGERED: 'k-queue-triggered'
 }
 
 const SPECTATE = {

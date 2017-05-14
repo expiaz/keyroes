@@ -23,9 +23,9 @@ class Match{
             }
         };
 
-        this.id = "match" + this.players.reduce(function (gameId, player) {
+        this.id = this.players.reduce(function (gameId, player) {
             return gameId + player.getPublicId();
-        }, this.players);
+        }, "match");
 
         this.clock = new Clock();
         this.clock.bind(this);
@@ -33,6 +33,8 @@ class Match{
         this.players.forEach(function (player) {
             player.enterMatch(this);
         }.bind(this));
+
+        this.socketPool.to(this.id).emit(constants.queue.TRIGGERED);
 
         this.clock.start(this.options.timer.time);
     }
@@ -67,8 +69,7 @@ class Match{
     }
 
     reconcile(player){
-        player.enterMatch(this);
-        player.getSocket().emit(constants.match.MAJ_COUNTER, this.counter);
+        player.getSocket().join(this.getPublicId());
     }
 
     clockEnd(){
@@ -92,10 +93,18 @@ class Match{
                     p.enterQueue();
                 else
                     p.abortMatch();
+
+                p.synchronize();
             });
         }
 
 
+    }
+
+    getActualState(){
+        return {
+            counter: this.counter.slice()
+        }
     }
 
 }

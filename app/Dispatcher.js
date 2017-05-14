@@ -5,6 +5,7 @@ import Queue from './components/Queue';
 
 import constants from '../core/shared/constants';
 import Match from "./components/Match";
+import SpectateManager from "./components/SpectateManager";
 
 
 export default class Dispatcher extends Component{
@@ -14,24 +15,34 @@ export default class Dispatcher extends Component{
         this.state = {
             state: constants.state.IN_HALL
         }
+
+        this.enterHall = this.enterHall.bind(this);
+        this.enterGame = this.enterGame.bind(this);
+        this.sync = this.sync.bind(this);
     }
 
     componentDidMount(){
-        this.props.socket.on(constants.hall.ENTER_HALL, this.enterHall.bind(this));
-        this.props.socket.on(constants.game.ENTER_GAME, this.enterGame.bind(this));
-        this.props.socket.on(constants.user.RESOLVE, this.resolve.bind(this));
+        this.props.socket.on(constants.hall.ENTER_HALL, this.enterHall);
+        this.props.socket.on(constants.game.ENTER_GAME, this.enterGame);
+        this.props.socket.on(constants.user.SYNCHRONIZE, this.sync);
+
+        this.props.socket.emit(constants.user.NEED_SYNC);
     }
 
-    componentWillUnmout(){
+    componentWillUnmount(){
         this.props.socket.removeListener(constants.hall.ENTER_HALL, this.enterHall);
         this.props.socket.removeListener(constants.game.ENTER_GAME, this.enterGame);
-        this.props.socket.removeListener(constants.user.RESOLVE, this.resolve);
+        this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync);
     }
 
-    resolve(state){
+    sync(state){
+
+        console.log("SYNC", state);
+
         if(state.state === constants.state.IN_GAME) {
-            this.enterGame();
+            return this.enterGame();
         }
+        this.enterHall();
     }
 
     enterHall(){
@@ -45,6 +56,7 @@ export default class Dispatcher extends Component{
     getHallLayout(){
         return (
             <div>
+                <SpectateManager socket={this.props.socket}/>
                 <Queue socket={this.props.socket} />
                 <Match socket={this.props.socket}/>
                 <Chat socket={this.props.socket} />

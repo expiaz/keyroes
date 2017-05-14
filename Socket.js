@@ -13,6 +13,7 @@ var LetterFactory = require('./core/factory/LetterFactory');
 var MatchFactory = require('./core/factory/MatchFactory');
 
 var ChatManager = require('./core/manager/ChatManager');
+var GameManager = require('./core/manager/GameManager');
 
 var QueueManager = require('./core/manager/QueueManager');
 
@@ -31,9 +32,12 @@ MatchFactory.init();
 LetterFactory.init();
 ChatManager.init();
 QueueManager.init();
+GameManager.init();
 
 //bind events
 io.on('connection', function (socket) {
+
+    socket.removeListener;
 
     console.log('Socket connecting');
 
@@ -56,6 +60,11 @@ io.on('connection', function (socket) {
     user.setSocket(socket);
 
     console.log('socket connected');
+
+    /*
+    SYNC
+     */
+    socket.on(events.user.NEED_SYNC, user.synchronize.bind(user));
 
     /*
     CHAT
