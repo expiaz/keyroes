@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import constants from '../../core/shared/constants';
 
-import Message from './functionnals/Message';
+import Message from './presentation/Message';
 import Input from './Input';
 
 export default class Chat extends Component{
@@ -28,13 +28,9 @@ export default class Chat extends Component{
     }
 
     componentWillUnmount(){
-        console.log('Chat unmount');
-
-        console.log(this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync));
-        console.log(this.props.socket.removeListener(constants.chat.NEW_MESSAGE, this.newMessage));
-        console.log(this.props.socket.removeListener(constants.chat.MAJ_MESSAGES, this.allMessages));
-
-        console.log('chat finished unmouting');
+        this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync);
+        this.props.socket.removeListener(constants.chat.NEW_MESSAGE, this.newMessage);
+        this.props.socket.removeListener(constants.chat.MAJ_MESSAGES, this.allMessages);
     }
 
     sync(state){
@@ -62,7 +58,7 @@ export default class Chat extends Component{
     render(){
         console.log(this.state.messages);
         return (
-            <div>
+            <div className="chat col-md-4">
                 <div>
                     {this.state.messages}
                 </div>

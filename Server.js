@@ -1,5 +1,7 @@
 var express = require('express');
+var http = require('http');
 var app = express();
+var server = http.createServer(app);
 var path = require('path');
 var bodyParser = require('body-parser');
 
@@ -10,6 +12,7 @@ var Chino = require('./chino/chino');
 chino = new Chino();
 chino.register(__dirname + '/templates/auth.chino', 'auth');
 
+
 //bodyParser
 app.use(bodyParser.urlencoded({extended: true }));
 app.use(bodyParser.json());
@@ -19,6 +22,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Use the session middleware
 app.use(session);
+
+
+
 
 app.get('/auth', function (req,res) {
     console.log('get auth');
@@ -66,7 +72,8 @@ app.post('/auth', function (req,res) {
 
 //base middlware
 app.use(function (req,res,next) {
-    console.log('base middleware token ', req.session.keyroesToken);
+    console.log(req.url)
+    console.log('base middleware token ', req.session.keyroesToken, typeof req.session.keyroesToken);
     if(typeof req.session.keyroesToken == "string") return next();
     return res.redirect('/auth');
 });
@@ -78,7 +85,7 @@ app.get('/', function(req, res) {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-var server = app.listen(3000, function (err) {
+server.listen(3000, function (err) {
     if(err) throw err;
     console.log('Server listening');
 });

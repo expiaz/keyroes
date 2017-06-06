@@ -65,17 +65,11 @@ export default class Queue extends Component{
             )
         }
 
-        if(!! this.state.subscribed){
-            return (
-                <div>
-                    Waiting for a match ...
-                    <button onClick={this.handleSubscribe}>Leave queue</button>
-                </div>
-            )
-        }
-
         return (
-            <button onClick={this.handleSubscribe}>Join queue</button>
+            <div className="queue col-md-12">
+                {!! this.state.subscribed && 'Waiting for a match ...'}
+                <button onClick={this.handleSubscribe}>{ !! this.state.subscribed ? 'Leave queue' : 'Join Queue'}</button>
+            </div>
         )
     }
 

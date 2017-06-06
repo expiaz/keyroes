@@ -21,7 +21,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js",
-    "build": "webpack --watch"
+    "build": "webpack",
+    "watch": "webpack --watch"
   },
   "repository": "git+https://github.com/expiaz/keyroes.git",
   "author": "expiaz",

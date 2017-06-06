@@ -55,10 +55,12 @@ export default class Dispatcher extends Component{
 
     getHallLayout(){
         return (
-            <div>
-                <SpectateManager socket={this.props.socket}/>
-                <Queue socket={this.props.socket} />
+            <div className="container">
                 <Match socket={this.props.socket}/>
+                <div className="col-md-8">
+                    <SpectateManager socket={this.props.socket}/>
+                    <Queue socket={this.props.socket} />
+                </div>
                 <Chat socket={this.props.socket} />
             </div>
         );

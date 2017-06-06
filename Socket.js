@@ -20,10 +20,14 @@ var QueueManager = require('./core/manager/QueueManager');
 var GameRepository = require('./core/repository/GameRepository');
 var UserRepository = require('./core/repository/UserRepository');
 
+
+
 //base middleware socketio
 io.use(function(socket, next) {
     session(socket.request, socket.request.res, next);
 });
+
+io.origins('*:*');
 
 
 Io.setInstance(io);
@@ -36,8 +40,6 @@ GameManager.init();
 
 //bind events
 io.on('connection', function (socket) {
-
-    socket.removeListener;
 
     console.log('Socket connecting');
 

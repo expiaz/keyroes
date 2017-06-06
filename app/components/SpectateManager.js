@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import constants from '../../core/shared/constants';
 
-import SpectateTile from './functionnals/SpectateTile';
+import SpectateTile from './presentation/SpectateTile';
 
 export default class SpectateManager extends Component{
 
@@ -57,7 +57,7 @@ export default class SpectateManager extends Component{
     render(){
 
         return (
-            <div>
+            <div className="spectate col-md-12">
                 <h2>Actual Games : </h2>
                 {this.state.games}
             </div>

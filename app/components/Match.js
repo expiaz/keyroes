@@ -42,19 +42,15 @@ export default class Match extends Component{
     }
 
     componentWillUnmount(){
-        console.log('Match unmount');
+        this.props.socket.removeListener(constants.match.ENTER_MATCH, this.enterMatch);
 
-        console.log(this.props.socket.removeListener(constants.match.ENTER_MATCH, this.enterMatch));
+        this.props.socket.removeListener(constants.match.CLOCK_TICK, this.majClock);
 
-        console.log(this.props.socket.removeListener(constants.match.CLOCK_TICK, this.majClock));
+        this.props.socket.removeListener(constants.match.MAJ_COUNTER, this.majCounter);
 
-        console.log(this.props.socket.removeListener(constants.match.MAJ_COUNTER, this.majCounter));
+        this.props.socket.removeListener(constants.match.LEAVE_MATCH, this.leaveMatch);
 
-        console.log(this.props.socket.removeListener(constants.match.LEAVE_MATCH, this.leaveMatch));
-
-        console.log(this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync));
-
-        console.log('Match finished unmouting');
+        this.props.socket.removeListener(constants.user.SYNCHRONIZE, this.sync);
     }
 
     sync(state){
@@ -127,7 +123,7 @@ export default class Match extends Component{
         let value = parseFloat(this.state.time * 20);
 
         return (
-            <div style={{display: this.state.displayed ? 'block' : 'none'}}>
+            <div style={{display: this.state.displayed ? 'block' : 'none'}} className="match">
                 <div>{this.state.counter.map((e) => e ? 'OK' : 'NO')}</div>
                 <progress value={value} max="100">{this.state.time} sec left</progress>
                 <div>{this.state.time} seconds</div>

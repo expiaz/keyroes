@@ -1,1 +1,1 @@
-var io = require('./socket');
+require('./socket');
