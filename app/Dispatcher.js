@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import Game from './components/Game';
+
 import Chat from './components/Chat';
 import Queue from './components/Queue';
 
@@ -67,7 +69,7 @@ export default class Dispatcher extends Component{
     }
 
     getGameLayout(){
-        return <p>Game</p>;
+        return <Game socket={this.props.socket}/>;
     }
 
 

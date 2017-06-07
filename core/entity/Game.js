@@ -76,7 +76,10 @@ class Game{
 
     clockTick(millis){
         var display = (millis/1000).toFixed(1);
-        this.socketPool.to(this.id).emit(constants.game.CLOCK_TICK, {time: display, angle: this.options.timer.angle*display});
+        this.socketPool.to(this.id).emit(constants.game.CLOCK_TICK, {
+            time: display,
+            angle: this.options.timer.angle*display
+        });
     }
 
     clockEnd(){
@@ -93,6 +96,9 @@ class Game{
     }
 
     handleKeypress(player, letterCode){
+
+        console.log('Game::handleKeyPress ',player.getUsername(), letterCode)
+
         let p = this.players.get(player.getPublicId());
         if(p === void 0) return;
 
@@ -132,6 +138,7 @@ class Game{
         }
         this.historyze(player, letterCode, valid);
         this.score = this.getActualScore();
+        console.log('Game::actualScore', this.score)
         this.socketPool.to(this.id).emit(constants.game.MAJ_HISTORY, this.history);
         this.socketPool.to(this.id).emit(constants.game.MAJ_POINTS, this.score);
     }

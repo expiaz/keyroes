@@ -169,10 +169,12 @@ class User{
      * Socket bindings
      */
     onKeypress(letterCode){
-        if(this.game !== null)
+        console.log('User::onKeyPress '+ letterCode, typeof this.game)
+        if(this.game === null)
             return;
         if(!Letter.isValid(letterCode))
             return;
+        console.log('User::onKeyPress passed')
         this.game.handleKeypress(this, letterCode);
     }
 

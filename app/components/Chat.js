@@ -59,7 +59,7 @@ export default class Chat extends Component{
         console.log(this.state.messages);
         return (
             <div className="chat col-md-4">
-                <div>
+                <div className="messages">
                     {this.state.messages}
                 </div>
                 <Input submitHook={this.handleSubmitMessage} text="envoyer"/>

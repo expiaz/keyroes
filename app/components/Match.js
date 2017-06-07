@@ -124,7 +124,7 @@ export default class Match extends Component{
 
         return (
             <div style={{display: this.state.displayed ? 'block' : 'none'}} className="match">
-                <div>{this.state.counter.map((e) => e ? 'OK' : 'NO')}</div>
+                <div>{this.state.counter.map((e, i) => <span key={i} style={{color: e ? 'green' : 'red'}}>{e ? 'OK' : 'NO'}</span>)}</div>
                 <progress value={value} max="100">{this.state.time} sec left</progress>
                 <div>{this.state.time} seconds</div>
                 {this.state.answer !== -1
